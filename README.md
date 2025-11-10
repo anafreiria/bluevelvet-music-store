@@ -5,7 +5,7 @@ An online music store project developed by a team of seven students. The BlueVel
 
 An online platform for discovering and purchasing music albums.
 
-## 👩‍💻 Team Members
+##  Team Members
 - Ana Flávia Rodrigues 
 - Bianca
 - Luca
@@ -13,10 +13,10 @@ An online platform for discovering and purchasing music albums.
 - Vinícius Ribeiro
 - Vinícius
 
-## 🛠️ Technologies
+##  Technologies
 - instructions to be updated
 - 
-## 🚀 How to Run
+##  How to Run
 1. Clone the repository  
    `git clone https://github.com/anafreiria/bluevelvet-music-store.git`
 3. Navigate to the project folder  
