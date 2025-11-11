@@ -1,17 +1,14 @@
-# bluevelvet-music-store
-An online music store project developed by a team of seven students. The BlueVelvet Music Store allows users to browse, search, and purchase music albums online.
-
 # 🎵 BlueVelvet Music Store
 
-An online platform for discovering and purchasing music albums.
+An online platform for discovering and purchasing music albums. The BlueVelvet Music Store allows users to browse, search, and purchase music albums online.
 
 ##  Team Members
-- Ana Flávia Rodrigues 
-- Bianca
-- Luca
-- Sophia
+- Ana Flávia Freiria 
+- Bianca Dyandra
+- Luca Vieira
+- Sofia Cabral
 - Vinícius Ribeiro
-- Vinícius
+- Vinícius Rossato
 
 ##  Technologies
 - instructions to be updated
