@@ -7,6 +7,7 @@ An online platform for discovering and purchasing music albums. The BlueVelvet M
 - Bianca Dyandra
 - Luca Vieira
 - Sofia Cabral
+- Raissa Nunes 
 - Vinícius Ribeiro
 - Vinícius Rossato
 
