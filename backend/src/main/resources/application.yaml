@@ -1,0 +1,16 @@
+spring:
+  application:
+    name: "Blue Velvet Music Store"
+  datasource:
+    username: rey
+    password: rey-pass
+    url: jdbc:mysql://localhost:3306/db
+    driver-class-name: com.mysql.cj.jdbc.Driver
+# add p/ categoria
+  jpa:
+    hibernate:
+      ddl-auto: update # Cria/Atualiza as tabelas automaticamente
+    show-sql: true # Mostra os comandos SQL no console
+    properties:
+      hibernate:
+        dialect: org.hibernate.dialect.MySQL8Dialect # Otimiza o SQL para MySQL
