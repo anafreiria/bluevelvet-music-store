@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Product Details - BlueVelvet Music Store</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<h1>Product Details</h1>
+
+<div id="product-details" class="container" th:object="${product}">
+    <div>
+        <label>Product ID:</label>
+        <span id="product-id" th:text="*{id}"></span>
+    </div>
+
+    <div>
+        <label>Product Name:</label>
+        <span id="product-name" th:text="*{name}"></span>
+    </div>
+
+    <div>
+        <label>Category:</label>
+        <span id="category" th:text="*{category}"></span>
+    </div>
+
+    <div>
+        <label>Brand:</label>
+        <span id="brand" th:text="*{brand}"></span>
+    </div>
+
+    <div>
+        <label>Short Description:</label>
+        <span id="short-description" th:text="*{shortDescription}"></span>
+    </div>
+
+    <div>
+        <label>Full Description:</label>
+        <p id="full-description" th:text="*{fullDescription}"></p>
+    </div>
+
+    <div>
+        <label>List Price:</label>
+        <span id="list-price" th:text="|$ *{listPrice}|"></span>
+    </div>
+
+    <div>
+        <label>Discount:</label>
+        <span id="discount" th:text="|*{discount} %|"></span>
+<!--        <span id="discount">5%</span>-->
+    </div>
+
+    <div>
+        <label>Enabled:</label>
+        <span id="enabled" th:text="*{isEnabled}"></span>
+    </div>
+
+    <div>
+        <label>In Stock:</label>
+        <span id="in-stock" th:text="*{inStock}"></span>
+    </div>
+
+    <div>
+        <label>Creation Time:</label>
+        <span id="creation-time" th:text="*{creationTime}"></span>
+    </div>
+
+    <div>
+        <label>Update Time:</label>
+        <span id="update-time" th:text="*{updateTime}"></span>
+    </div>
+
+    <div>
+        <label>Dimensions:</label>
+        <span id="dimensions" th:text="|Length: *{dimension.length} inches, Width: *{dimension.width} inches, Height: *{dimension.height} inches|"></span>
+    </div>
+
+    <div>
+        <label>Weight:</label>
+        <span id="weight" th:text="|*{dimension.weight} pounds|"></span>
+    </div>
+
+    <div>
+        <label>Cost:</label>
+        <span id="cost" th:text="|$ *{dimension.weight}|"></span>
+    </div>
+
+    <div>
+        <label>Product Details:</label>
+        <ul id="product-details-list" th:each="productDetail : *{details}">
+            <li th:text="${productDetail?.name}"></li>
+            <li th:text="${productDetail?.value}"></li>
+        </ul>
+    </div>
+</div>
+</body>
+</html>
