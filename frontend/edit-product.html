@@ -1,0 +1,45 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Edit Product - BlueVelvet Music Store</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>BlueVelvet Music Store</h1>
+    <h2>Edit Product</h2>
+    <form id="editProductForm">
+        <input type="hidden" id="productId">
+        <input type="text" id="name" placeholder="Product Name" required>
+        <textarea id="shortDescription" placeholder="Short Description" required></textarea>
+        <textarea id="fullDescription" placeholder="Full Description" required></textarea>
+        <input type="text" id="brand" placeholder="Brand" required>
+        <input type="text" id="category" placeholder="Category" required>
+        <input type="file" id="mainImage" accept="image/png">
+        <div id="currentMainImage"></div>
+        <input type="file" id="featuredImages" accept="image/png" multiple>
+        <div id="currentFeaturedImages"></div>
+        <input type="number" id="listPrice" placeholder="List Price" step="0.01" required>
+        <input type="number" id="discountPercent" placeholder="Discount Percent" min="0" max="100" required>
+        <label>
+            <input type="checkbox" id="enabled"> Enabled
+        </label>
+        <label>
+            <input type="checkbox" id="inStock"> In Stock
+        </label>
+        <input type="number" id="length" placeholder="Length (inches)" step="0.01" required>
+        <input type="number" id="width" placeholder="Width (inches)" step="0.01" required>
+        <input type="number" id="height" placeholder="Height (inches)" step="0.01" required>
+        <input type="number" id="weight" placeholder="Weight (pounds)" step="0.01" required>
+        <input type="number" id="cost" placeholder="Cost" step="0.01" required>
+        <div id="productDetails"></div>
+        <button type="button" id="addDetailBtn">Add Detail</button>
+        <button type="submit">Update Product</button>
+    </form>
+    <a href="dashboard.html">Back to Dashboard</a>
+</div>
+<script src="../BlueVelvet/script.js"></script>
+</body>
+</html>

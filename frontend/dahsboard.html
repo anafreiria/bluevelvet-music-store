@@ -1,0 +1,62 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - BlueVelvet</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+<header>
+    <h1>BlueVelvet Music Store</h1>
+    <nav>
+        <span>Bem-vindo!</span>
+        <button id="btnLogout">Sair</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2>Lista de Produtos</h2>
+        <a href="../add-product.html" class="action-btn btn-view" style="font-size: 1rem;">+ Novo Produto</a>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>Nome</th>
+            <th>Artista</th>
+            <th>Preço</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody id="productTableBody">
+        </tbody>
+    </table>
+</div>
+
+<script src="../BlueVelvet/script.js"></script>
+<script>
+    const tbody = document.getElementById('productTableBody');
+    const products = getProducts();
+
+    if (products.length === 0) {
+        tbody.innerHTML = '<tr><td colspan="4" style="text-align:center;">Nenhum produto cadastrado.</td></tr>';
+    } else {
+        products.forEach(p => {
+            const tr = document.createElement('tr');
+            tr.innerHTML = `
+                    <td>${p.name}</td>
+                    <td>${p.artist}</td>
+                    <td>R$ ${parseFloat(p.price).toFixed(2)}</td>
+                    <td>
+                        <a href="view-product.html?id=${p.id}" class="action-btn btn-view">Ver</a>
+                        <a href="edit-product.html?id=${p.id}" class="action-btn btn-edit">Editar</a>
+                        <button onclick="deleteProduct('${p.id}')" class="action-btn btn-delete">Excluir</button>
+                    </td>
+                `;
+            tbody.appendChild(tr);
+        });
+    }
+</script>
+</body>
+</html>

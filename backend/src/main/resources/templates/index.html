@@ -1,0 +1,40 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Login - BlueVelvet Music Store</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+
+</head>
+<body>
+<div class="container">
+    <h1>Login to BlueVelvet Music Store</h1>
+    <form id="login-form" action="#" method="post">
+
+        <label for="email">Email Address:</label>
+        <input type="email" id="email" name="email" required placeholder="Enter your email address" class="wide-input" />
+
+        <label for="password">Password:</label>
+        <input type="password" id="password" name="password" required minlength="8" placeholder="Enter your password" />
+        <small>Password must be at least 8 characters long</small>
+
+        <div>
+            <input type="checkbox" id="remember-me" name="remember_me">
+            <label for="remember-me">Remember Me</label>
+        </div>
+
+        <!-- This error message must be shown in case of incorrect credentials -->
+        <div id="error-message" style="color: red; display: none;">
+            <p>Incorrect email or password. Please try again.</p>
+        </div>
+
+        <div>
+            <button type="submit">Login</button>
+        </div>
+    </form>
+
+    <p>Don't have an account? <a href="register.html">Register</a></p>
+</div>
+</body>
+</html>

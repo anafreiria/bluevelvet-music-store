@@ -1,0 +1,43 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Dashboard - BlueVelvet Music Store</title>
+    <link rel="stylesheet" href="css/styles.css">
+</head>
+<body>
+<div class="container">
+    <h1>BlueVelvet Music Store</h1>
+    <h2>Product Management</h2>
+    <div id="userInfo"></div>
+    <button id="logoutBtn">Logout</button>
+    <div id="productControls">
+        <button id="resetProductsBtn">Reset Products to Initial State</button>
+        <button id="addProductBtn">Add Product</button>
+        <input type="text" id="searchInput" placeholder="Search products...">
+        <select id="sortSelect">
+            <option value="name">Sort by Name</option>
+            <option value="id">Sort by ID</option>
+            <option value="brand">Sort by Brand</option>
+            <option value="category">Sort by Category</option>
+        </select>
+    </div>
+    <table id="productTable">
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Image</th>
+            <th>Name</th>
+            <th>Brand</th>
+            <th>Category</th>
+            <th>Actions</th>
+        </tr>
+        </thead>
+        <tbody id="productList"></tbody>
+    </table>
+    <div id="pagination"></div>
+</div>
+<script src="../BlueVelvet/script.js"></script>
+</body>
+</html>

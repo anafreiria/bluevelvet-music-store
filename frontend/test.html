@@ -1,0 +1,114 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - BlueVelvet Music Store</title>
+</head>
+<body>
+<h1>Add Product</h1>
+<form id="add-product-form" action="/add-product" method="post" enctype="multipart/form-data">
+    <div>
+        <label for="product-name">Product Name:</label>
+        <input type="text" id="product-name" name="product_name" required placeholder="Enter product name" />
+        <small>Must be unique</small>
+    </div>
+
+    <div>
+        <label for="short-description">Short Description:</label>
+        <textarea id="short-description" name="short_description" rows="3" placeholder="Enter a brief description"></textarea>
+    </div>
+
+    <div>
+        <label for="full-description">Full Description:</label>
+        <textarea id="full-description" name="full_description" rows="5" placeholder="Enter a detailed description"></textarea>
+    </div>
+
+    <div>
+        <label for="brand">Brand:</label>
+        <input type="text" id="brand" name="brand" placeholder="Enter product brand" />
+    </div>
+
+    <div>
+        <label for="category">Category:</label>
+        <input type="text" id="category" name="category" placeholder="Enter product category" />
+    </div>
+
+    <div>
+        <label for="main-image">Main Image:</label>
+        <input type="file" id="main-image" name="main_image" accept="image/png" required />
+        <small>Accepted format: PNG</small>
+    </div>
+
+    <div>
+        <label for="featured-images">Featured Images:</label>
+        <input type="file" id="featured-images" name="featured_images[]" accept="image/png" multiple />
+        <small>Accepted format: PNG</small>
+    </div>
+
+    <div>
+        <label for="list-price">List Price:</label>
+        <input type="number" id="list-price" name="list_price" step="0.01" placeholder="Enter the selling price" required />
+    </div>
+
+    <div>
+        <label for="discount">Discount (%):</label>
+        <input type="number" id="discount" name="discount" step="0.01" placeholder="Enter discount percentage" />
+    </div>
+
+    <div>
+        <label for="enabled">Enabled:</label>
+        <input type="checkbox" id="enabled" name="enabled" checked />
+        <small>Uncheck if the product should not be displayed in the store</small>
+    </div>
+
+    <div>
+        <label for="in-stock">In Stock:</label>
+        <input type="checkbox" id="in-stock" name="in_stock" checked />
+        <small>Uncheck if the product is out of stock</small>
+    </div>
+
+    <div>
+        <label for="creation-time">Creation Time:</label>
+        <input type="datetime-local" id="creation-time" name="creation_time" readonly />
+    </div>
+
+    <div>
+        <label for="update-time">Update Time:</label>
+        <input type="datetime-local" id="update-time" name="update_time" readonly />
+    </div>
+
+    <div>
+        <label for="length">Length (inches):</label>
+        <input type="number" id="length" name="length" step="0.01" placeholder="Enter length" />
+    </div>
+
+    <div>
+        <label for="width">Width (inches):</label>
+        <input type="number" id="width" name="width" step="0.01" placeholder="Enter width" />
+    </div>
+
+    <div>
+        <label for="height">Height (inches):</label>
+        <input type="number" id="height" name="height" step="0.01" placeholder="Enter height" />
+    </div>
+
+    <div>
+        <label for="weight">Weight (pounds):</label>
+        <input type="number" id="weight" name="weight" step="0.01" placeholder="Enter weight" />
+    </div>
+
+    <div>
+        <label for="cost">Cost:</label>
+        <input type="number" id="cost" name="cost" step="0.01" placeholder="Enter cost price" required />
+    </div>
+
+    <div>
+        <label for="product-details">Product Details:</label>
+        <textarea id="product-details" name="product_details" rows="3" placeholder="Enter product details (e.g. Track 1 - Karma Police, Track 2 - Airbag)"></textarea>
+    </div>
+
+    <button type="submit">Add Product</button>
+</form>
+</body>
+</html>
