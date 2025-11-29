@@ -45,7 +45,6 @@ A senha de conexão **não está no repositório**. Você deve defini-la localme
 * **Variável Necessária:** **`DB_PASSWORD`**
 * **Valor:** A senha real do seu usuário `root` do MySQL (Ex: `Test@1234`).
 
-> **Instrução de Setup Local:** No IntelliJ, defina essa variável em **Run $\rightarrow$ Edit Configurations...** na seção **Environment Variables**.
 
 ---
 
