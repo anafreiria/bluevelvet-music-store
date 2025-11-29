@@ -1,0 +1,56 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Add Product - BlueVelvet Music Store</title>
+    <link rel="stylesheet" th:href="@{/css/styles.css}">
+</head>
+<body>
+<div class="container">
+    <h1>BlueVelvet Music Store</h1>
+    <h2>Add Product</h2>
+
+    <form id="createProductForm" method="post" th:action="@{/product}" th:object="${product}">
+
+        <input type="text" id="name" placeholder="Product Name" th:field="*{name}" required>
+
+        <textarea id="shortDescription" placeholder="Short Description" th:field="*{shortDescription}" required></textarea>
+
+        <textarea id="fullDescription" placeholder="Full Description" th:field="*{fullDescription}" required></textarea>
+
+        <input type="text" id="brand" placeholder="Brand" th:field="*{brand}" required>
+
+        <input type="text" id="category" placeholder="Category" th:field="*{category}" required>
+
+        <input type="number" id="listPrice" placeholder="List Price" step="0.01" th:field="*{listPrice}" required>
+
+        <input type="number" id="discountPercent" placeholder="Discount Percent" min="0" max="100" th:field="*{discount}" required>
+
+        <label>
+            <input type="checkbox" id="enabled"  th:field="*{isEnabled}"> Enabled
+        </label>
+
+
+        <label>
+            <input type="checkbox" id="inStock"  th:field="*{inStock}"> In Stock
+        </label>
+
+        <input type="number" id="length" placeholder="Length (inches)" step="0.01"  th:field="*{dimension.length}" required>
+
+        <input type="number" id="width" placeholder="Width (inches)" step="0.01" th:field="*{dimension.width}" required>
+
+        <input type="number" id="height" placeholder="Height (inches)" step="0.01" th:field="*{dimension.height}" required>
+
+        <input type="number" id="weight" placeholder="Weight (pounds)" step="0.01" th:field="*{dimension.weight}" required>
+
+        <input type="number" id="cost" placeholder="Cost" step="0.01"  th:field="*{cost}" required>
+
+        <div>
+            <button type="submit">Add Product</button>
+        </div>
+    </form>
+    <a th:href="@{dashboard.html}">Back to Dashboard</a>
+</div>
+</body>
+</html>

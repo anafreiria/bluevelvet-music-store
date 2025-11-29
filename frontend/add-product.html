@@ -3,41 +3,47 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Dashboard - BlueVelvet Music Store</title>
-    <link rel="stylesheet" href="css/styles.css">
+    <title>Add Product - BlueVelvet Music Store</title>
+    <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
 <div class="container">
     <h1>BlueVelvet Music Store</h1>
-    <h2>Product Management</h2>
+    <h2>Add Product</h2>
     <div id="userInfo"></div>
     <button id="logoutBtn">Logout</button>
-    <div id="productControls">
-        <button id="resetProductsBtn">Reset Products to Initial State</button>
-        <button id="addProductBtn">Add Product</button>
-        <input type="text" id="searchInput" placeholder="Search products...">
-        <select id="sortSelect">
-            <option value="name">Sort by Name</option>
-            <option value="id">Sort by ID</option>
-            <option value="brand">Sort by Brand</option>
-            <option value="category">Sort by Category</option>
-        </select>
-    </div>
-    <table id="productTable">
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Image</th>
-            <th>Name</th>
-            <th>Brand</th>
-            <th>Category</th>
-            <th>Actions</th>
-        </tr>
-        </thead>
-        <tbody id="productList"></tbody>
-    </table>
-    <div id="pagination"></div>
+
+    <form id="addProductForm">
+        <input type="text" id="name" placeholder="Product Name" required>
+        <textarea id="shortDescription" placeholder="Short Description" required></textarea>
+        <textarea id="fullDescription" placeholder="Full Description" required></textarea>
+        <input type="text" id="brand" placeholder="Brand" required>
+        <input type="text" id="category" placeholder="Category" required>
+
+        <input type="file" id="mainImage" accept="image/png,image/jpeg">
+        <input type="file" id="featuredImages" accept="image/png,image/jpeg" multiple>
+
+        <input type="number" id="listPrice" placeholder="List Price" step="0.01" required>
+        <input type="number" id="discountPercent" placeholder="Discount Percent" min="0" max="100" step="0.01" required>
+
+        <label><input type="checkbox" id="enabled"> Enabled</label>
+        <label><input type="checkbox" id="inStock"> In Stock</label>
+
+        <input type="number" id="length" placeholder="Length" step="0.01" required>
+        <input type="number" id="width" placeholder="Width" step="0.01" required>
+        <input type="number" id="height" placeholder="Height" step="0.01" required>
+        <input type="number" id="weight" placeholder="Weight" step="0.01" required>
+
+        <input type="number" id="cost" placeholder="Cost" step="0.01" required>
+
+        <div id="productDetails"></div>
+        <button type="button" id="addDetailBtn">Add Detail</button>
+
+        <button type="submit">Create Product</button>
+    </form>
+
+    <a href="dashboard.html">Back to Dashboard</a>
 </div>
-<script src="../BlueVelvet/script.js"></script>
+<script src="script.js"></script>
 </body>
 </html>

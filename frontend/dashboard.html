@@ -1,0 +1,58 @@
+<!DOCTYPE html>
+<html lang="pt-BR">
+<head>
+    <meta charset="UTF-8">
+    <title>Dashboard - BlueVelvet</title>
+    <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+    <h1>BlueVelvet Music Store</h1>
+    <nav>
+        <span id="userInfo">Bem-vindo!</span>
+        <button id="logoutBtn">Sair</button>
+        <button id="categoriesBtn" class="action-btn btn-view" style="margin-left:8px;">Categorias</button>
+    </nav>
+</header>
+
+<div class="container">
+    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
+        <h2>Lista de Produtos</h2>
+        <button id="addProductBtn" class="action-btn btn-view" style="font-size: 1rem;">+ Novo Produto</button>
+    </div>
+
+    <div style="display:flex; gap: 16px; align-items:center; margin-bottom:16px;">
+        <label>
+            Ordenar por:
+            <select id="sortSelect">
+                <option value="name">Nome</option>
+                <option value="brand">Marca</option>
+                <option value="category">Categoria</option>
+            </select>
+        </label>
+        <label style="flex:1;">
+            Buscar:
+            <input type="text" id="searchInput" placeholder="Nome, descrição, marca ou categoria" style="width:100%;">
+        </label>
+    </div>
+
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Imagem</th>
+            <th>Nome</th>
+            <th>Marca</th>
+            <th>Categoria</th>
+            <th>Ações</th>
+        </tr>
+        </thead>
+        <tbody id="productList">
+        </tbody>
+    </table>
+    <div id="pagination" style="margin-top:16px;"></div>
+</div>
+
+<script src="script.js"></script>
+</body>
+</html>
