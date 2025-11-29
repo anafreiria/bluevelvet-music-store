@@ -2,7 +2,7 @@
 
 ## 🎯 Foco Deste Incremento (US-0907)
 
-Este *commit* (e a *branch* **Bianca**) estabelece a infraestrutura básica de persistência de dados necessária para a implementação da História de Usuário:
+Este *commit* estabelece a infraestrutura básica de persistência de dados necessária para a implementação da História de Usuário:
 
 ### US-0907: Listar Categorias de Produtos
 
