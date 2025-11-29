@@ -9,6 +9,13 @@ Este *commit* (e a *branch* **Bianca**) estabelece a infraestrutura básica de p
 Como um desenvolvedor, o objetivo principal foi garantir que a aplicação Spring Boot consiga se conectar de forma **segura e estável** ao MySQL 8.0 para que os modelos de Categoria e Produto possam ser criados e manipulados.
 
 ---
+## 💾 Base de Dados Inicial (SQL)
+
+**A base de dados SQL está incluída!** O script **`data.sql`** (ou `bluevelvet_init.sql`), localizado em `src/main/resources`, contém os comandos para:
+1.  **Criar as tabelas** (`users`, `categories`, `produtos`).
+2.  **Popular o banco** com dados iniciais.
+
+---
 
 ## 🛠️ Tecnologias e Configurações
 
