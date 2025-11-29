@@ -15,8 +15,6 @@ public class CategoryService {
 
     public Page<Category> listCategories(int page, String sortDirection) {
 
-        // CORREÇÃO: Usa o operador ternário para atribuir o valor FINAL em uma única linha.
-        // Isso garante que 'sortCriteria' seja final e evita o erro do compilador.
         final Sort sortCriteria = sortDirection.equalsIgnoreCase("DESC")
                 ? Sort.by("name").descending()
                 : Sort.by("name");
@@ -28,7 +26,6 @@ public class CategoryService {
 
         // 2. Carrega subcategorias, aplicando a mesma ordenação
         mainCats.forEach(cat -> {
-            // Agora, 'sortCriteria' é FINAL e não causa mais erro
             List<Category> children = repository.findByParentCategoryId(cat.getId(), sortCriteria);
             cat.setChildren(children);
         });

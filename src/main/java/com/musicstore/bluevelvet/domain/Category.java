@@ -12,11 +12,9 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // CORRIGIDO: Mapeia para a coluna "name" que existe no seu banco de dados
     @Column(name = "name", nullable = false)
     private String name;
 
-    // CORRIGIDO: Mapeia para a coluna "description" que existe no seu banco de dados
     @Column(name = "description")
     private String description;
 
