@@ -3,13 +3,14 @@ package com.musicstore.bluevelvet.api;
 import com.musicstore.bluevelvet.domain.Category;
 import com.musicstore.bluevelvet.domain.CategoryService;
 import org.springframework.data.domain.Page;
-import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.stereotype.Controller;
 import org.springframework.ui.Model;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+// Importação necessária (se estiver usando Spring Security)
+import org.springframework.security.access.prepost.PreAuthorize;
 
 @Controller
-@RequestMapping("/categories")
 public class CategoryController {
 
     private final CategoryService service;
@@ -18,23 +19,19 @@ public class CategoryController {
         this.service = service;
     }
 
-    // Apenas usuários com ROLE_ADMIN ou ROLE_EDITOR podem acessar esta página
-    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
-    @GetMapping
+    // ADICIONADO: Restringe o acesso à rota /categories para ADMIN ou EDITOR
+    @PreAuthorize("hasAnyAuthority('ADMIN', 'EDITOR')")
+    @GetMapping("/categories")
     public String listCategories(
             @RequestParam(defaultValue = "0") int page,
-            @RequestParam(defaultValue = "asc") String sort,
+            @RequestParam(defaultValue = "ASC") String sort,
             Model model) {
 
-        // Obtém categorias paginadas e ordenadas
-        Page<Category> categories = service.listPaginated(page, sort);
+        Page<Category> categories = service.listCategories(page, sort);
 
-        // Passa informações para o Thymeleaf
-        model.addAttribute("categoriesPage", categories);
-        model.addAttribute("currentPage", page);
+        model.addAttribute("categories", categories);
         model.addAttribute("sort", sort);
 
-        // Retorna a página list.html
         return "categories/list";
     }
 }

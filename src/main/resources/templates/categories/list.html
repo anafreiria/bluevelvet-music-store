@@ -1,61 +1,70 @@
 <!DOCTYPE html>
 <html xmlns:th="http://www.thymeleaf.org">
 <head>
-    <meta charset="UTF-8" />
-    <title>Categories</title>
-    <style>
-        body { font-family: Arial, Helvetica, sans-serif; padding: 20px; }
-        table { border-collapse: collapse; width: 100%; max-width: 900px; }
-        th, td { border: 1px solid #ddd; padding: 8px; text-align: left; }
-        th { background-color: #f2f2f2; }
-        .pagination { margin-top: 12px; }
-        .pagination a, .pagination span { margin-right: 8px; text-decoration: none; }
-    </style>
+    <meta charset="UTF-8"/>
+    <title>Categorias</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.2/dist/css/bootstrap.min.css" rel="stylesheet"/>
 </head>
-<body>
+<body class="bg-light">
+<div class="container py-4">
+    <h2 class="mb-4">Categorias de Produtos</h2>
 
-<h2>Categories List</h2>
+    <div class="mb-3">
+        <a th:href="@{/categories(sort='ASC')}" class="btn btn-outline-primary btn-sm">A–Z</a>
+        <a th:href="@{/categories(sort='DESC')}" class="btn btn-outline-secondary btn-sm">Z–A</a>
+    </div>
 
-<!-- Links de ordenação -->
-<p>
-    Sort:
-    <a th:href="@{|/categories?page=${currentPage}&sort=asc|}">Name ↑</a> |
-    <a th:href="@{|/categories?page=${currentPage}&sort=desc|}">Name ↓</a>
-</p>
+    <div class="table-responsive">
+        <table class="table table-striped table-bordered align-middle">
+            <thead class="table-dark">
+            <tr>
+                <th>Nome</th>
+                <th>Descrição</th>
+                <th>Parent</th>
+            </tr>
+            </thead>
+            <tbody>
+            <tr th:if="${#lists.isEmpty(categories.content)}">
+                <td colspan="3">Nenhuma categoria encontrada.</td>
+            </tr>
 
-<!-- Tabela de categorias -->
-<table>
-    <thead>
-    <tr>
-        <th>Name</th>
-        <th>Description</th>
-        <th>Parent</th>
-    </tr>
-    </thead>
+            <th:block th:each="parent : ${categories.content}">
 
-    <tbody>
-    <tr th:if="${#lists.isEmpty(categoriesPage.content)}">
-        <td colspan="3">No categories found.</td>
-    </tr>
+                <tr>
+                    <td><strong th:text="${parent.name}">Nome</strong></td>
+                    <td th:text="${parent.description}">Descrição</td>
+                    <td>-</td>
+                </tr>
 
-    <tr th:each="cat : ${categoriesPage.content}">
-        <td th:text="${cat.name}">Category name</td>
-        <td th:text="${cat.description}">Category description</td>
-        <td th:text="${cat.parentCategory != null ? cat.parentCategory.name : '-'}">Parent</td>
-    </tr>
-    </tbody>
-</table>
+                <tr th:each="child : ${parent.children}">
+                    <td>
+                        <span th:text="${child.name}">Subcategoria</span>
+                    </td>
+                    <td th:text="${child.description}">Descrição do Filho</td>
+                    <td th:text="${parent.name}">Nome do Pai</td>
+                </tr>
+            </th:block>
 
-<!-- Paginação -->
-<div class="pagination">
-    <a th:if="${categoriesPage.hasPrevious()}"
-       th:href="@{|/categories?page=${currentPage - 1}&sort=${sort}|}">Previous</a>
+            </tbody>
+        </table>
+    </div>
 
-    <span>Page <span th:text="${currentPage + 1}">1</span> of <span th:text="${categoriesPage.totalPages}">1</span></span>
+    <nav aria-label="Page navigation">
+        <ul class="pagination">
+            <li class="page-item" th:classappend="${categories.first} ? 'disabled'">
+                <a class="page-link" th:href="@{/categories(page=${categories.number - 1}, sort=${sort})}">Anterior</a>
+            </li>
 
-    <a th:if="${categoriesPage.hasNext()}"
-       th:href="@{|/categories?page=${currentPage + 1}&sort=${sort}|}">Next</a>
+            <li class="page-item" th:each="p : ${#numbers.sequence(0, categories.totalPages - 1)}"
+                th:classappend="${p == categories.number} ? 'active'">
+                <a class="page-link" th:text="${p + 1}" th:href="@{/categories(page=${p}, sort=${sort})}"></a>
+            </li>
+
+            <li class="page-item" th:classappend="${categories.last} ? 'disabled'">
+                <a class="page-link" th:href="@{/categories(page=${categories.number + 1}, sort=${sort})}">Próxima</a>
+            </li>
+        </ul>
+    </nav>
 </div>
-
 </body>
 </html>
