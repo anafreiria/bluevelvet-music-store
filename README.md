@@ -34,7 +34,7 @@ Para executar o projeto e avançar na implementação da US-0907, configure seu 
 
 ### 1. Conexão com o MySQL
 
-* **Porta:** A aplicação está configurada para se conectar ao servidor MySQL na porta **`3307`** (conforme `application.yml`).
+* **Porta:** A aplicação está configurada para se conectar ao servidor MySQL na porta **`3306`** (conforme `application.yml`).
 * **Usuário:** O usuário definido é **`root`**.
 * **Database:** A aplicação tentará criar o banco de dados **`bluevelvet`** se ele não existir (embora esta função esteja desabilitada para simplificação, a aplicação espera encontrar este schema).
 
