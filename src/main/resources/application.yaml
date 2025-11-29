@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/bluevelvet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
-    password: suasenha
+    password: 91294437
 
   jpa:
     hibernate:
