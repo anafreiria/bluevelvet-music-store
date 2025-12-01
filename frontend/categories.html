@@ -5,6 +5,111 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Criar Categoria - BlueVelvet Music Store</title>
     <link rel="stylesheet" href="css/style.css">
+    <style>
+        .status-enabled {
+            color: green;
+            font-weight: bold;
+        }
+        
+        .status-disabled {
+            color: red;
+            font-weight: bold;
+        }
+        
+        .category-indent {
+            padding-left: 20px;
+        }
+        
+        .action-buttons {
+            display: flex;
+            gap: 5px;
+        }
+        
+        .btn-enable {
+            background-color: #28a745;
+            color: white;
+        }
+        
+        .btn-disable {
+            background-color: #ffc107;
+            color: #000;
+        }
+        
+        .btn-delete {
+            background-color: #dc3545;
+            color: white;
+        }
+        
+        .btn {
+            border: none;
+            padding: 5px 10px;
+            border-radius: 4px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+        
+        .filters {
+            display: flex;
+            gap: 16px;
+            align-items: center;
+            margin: 16px 0;
+            padding: 12px;
+            background-color: #f8f9fa;
+            border-radius: 4px;
+        }
+        
+        .breadcrumb {
+            margin: 24px 0;
+            padding: 8px;
+            background-color: #f5f5f5;
+            border-radius: 4px;
+        }
+        
+        .pagination {
+            margin-top: 16px;
+            display: flex;
+            gap: 8px;
+            flex-wrap: wrap;
+            align-items: center;
+        }
+        
+        .pagination button {
+            padding: 6px 12px;
+            border: 1px solid #ddd;
+            background-color: white;
+            cursor: pointer;
+            border-radius: 4px;
+        }
+        
+        .pagination button:hover {
+            background-color: #f0f0f0;
+        }
+        
+        .pagination button.active {
+            background-color: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        
+        .status-info {
+            margin-top: 10px;
+            padding: 10px;
+            border-radius: 4px;
+            font-weight: bold;
+        }
+        
+        .status-success {
+            background-color: #d4edda;
+            color: #155724;
+            border: 1px solid #c3e6cb;
+        }
+        
+        .status-error {
+            background-color: #f8d7da;
+            color: #721c24;
+            border: 1px solid #f5c6cb;
+        }
+    </style>
 </head>
 <body>
 <div class="container">
@@ -12,32 +117,156 @@
     <h2>Criar Categoria</h2>
 
     <div id="userInfo"></div>
-    <button id="logoutBtn">Logout</button>
-    <a href="dashboard.html" style="margin-left: 8px;">Voltar para Dashboard</a>
+    <div style="margin-bottom: 20px;">
+        <button id="logoutBtn" class="btn btn-delete">Logout</button>
+        <a href="dashboard.html" style="margin-left: 8px;">Voltar para Dashboard</a>
+    </div>
 
-    <form id="categoryForm" style="margin-top: 16px;">
-        <input type="text" id="categoryName" placeholder="Nome da categoria" required>
-        <textarea id="categoryDescription" placeholder="Descrição (opcional)"></textarea>
-        <input type="number" id="parentCategoryId" placeholder="ID da categoria pai (opcional)" min="1">
-        <button type="submit">Criar Categoria</button>
+    <form id="categoryForm" style="margin-top: 16px; background-color: #f9f9f9; padding: 20px; border-radius: 5px;">
+        <div style="margin-bottom: 15px;">
+            <label for="categoryName" style="display: block; margin-bottom: 5px; font-weight: bold;">Nome da Categoria *</label>
+            <input type="text" id="categoryName" placeholder="Ex: Guitarras Elétricas" required style="width: 100%; padding: 8px;">
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="categoryDescription" style="display: block; margin-bottom: 5px; font-weight: bold;">Descrição (opcional)</label>
+            <textarea id="categoryDescription" placeholder="Descrição detalhada da categoria" style="width: 100%; padding: 8px; min-height: 80px;"></textarea>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <label for="parentCategoryId" style="display: block; margin-bottom: 5px; font-weight: bold;">ID da Categoria Pai (opcional)</label>
+            <input type="number" id="parentCategoryId" placeholder="Ex: 1" min="1" style="width: 100%; padding: 8px;">
+            <small style="color: #666;">Deixe em branco para criar uma categoria raiz</small>
+        </div>
+        
+        <div style="margin-bottom: 15px;">
+            <input type="checkbox" id="categoryEnabled" checked>
+            <label for="categoryEnabled" style="font-weight: bold;">Categoria Habilitada</label>
+        </div>
+        
+        <button type="submit" class="btn" style="background-color: #007bff; color: white; padding: 10px 20px;">Criar Categoria</button>
     </form>
 
-    <div id="categoryStatus" style="margin-top:12px;"></div>
+    <div id="categoryStatus" class="status-info"></div>
 
-    <h3 style="margin-top:24px;">Categorias existentes</h3>
-    <table>
+    <!-- Breadcrumb navigation -->
+    <div id="breadcrumb" class="breadcrumb">
+        <span id="breadcrumbPath">Início</span>
+    </div>
+
+    <!-- Filter controls -->
+    <div class="filters">
+        <div>
+            <input type="checkbox" id="showOnlyEnabled" checked>
+            <label for="showOnlyEnabled">Mostrar apenas categorias habilitadas</label>
+        </div>
+        <div>
+            <input type="checkbox" id="showSubcategories" checked>
+            <label for="showSubcategories">Mostrar subcategorias</label>
+        </div>
+        <div>
+            <button onclick="exportCategoryStatus()" class="btn" style="background-color: #6c757d; color: white;">
+                Exportar Status
+            </button>
+            <button onclick="importCategoryStatus()" class="btn" style="background-color: #17a2b8; color: white;">
+                Importar Status
+            </button>
+        </div>
+    </div>
+
+    <!-- Status summary -->
+    <div id="statusSummary" style="margin: 10px 0; padding: 10px; background-color: #e9ecef; border-radius: 4px;">
+        Carregando estatísticas...
+    </div>
+
+    <!-- Category table -->
+    <h3 style="margin-top:24px;">Categorias</h3>
+    <table style="width: 100%; border-collapse: collapse;">
         <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Descrição</th>
-            <th>Categoria Pai</th>
-            <th>Ações</th>
+        <tr style="background-color: #007bff; color: white;">
+            <th style="padding: 10px; text-align: left;">ID</th>
+            <th style="padding: 10px; text-align: left;">Nome</th>
+            <th style="padding: 10px; text-align: left;">Descrição</th>
+            <th style="padding: 10px; text-align: left;">Categoria Pai</th>
+            <th style="padding: 10px; text-align: left;">Status</th>
+            <th style="padding: 10px; text-align: left;">Ações</th>
         </tr>
         </thead>
         <tbody id="categoryList"></tbody>
     </table>
+
+    <!-- Pagination controls -->
+    <div id="pagination" class="pagination"></div>
 </div>
+
 <script src="script.js"></script>
+<script>
+// Funções auxiliares para exportar/importar status
+function exportCategoryStatus() {
+    const statusMap = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    const dataStr = JSON.stringify(statusMap, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'category-status-backup.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    alert('Status das categorias exportado com sucesso!');
+}
+
+function importCategoryStatus() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const importedStatus = JSON.parse(e.target.result);
+                localStorage.setItem('categoryStatus', JSON.stringify(importedStatus));
+                alert('Status importado com sucesso! Recarregando categorias...');
+                loadCategories();
+            } catch (error) {
+                alert('Erro ao importar arquivo. Certifique-se de que é um JSON válido.');
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
+// Função para atualizar o resumo de status
+function updateStatusSummary() {
+    const summaryDiv = document.getElementById('statusSummary');
+    if (!summaryDiv) return;
+    
+    const statusMap = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    const totalCategories = allCategories.length;
+    const enabledCategories = allCategories.filter(cat => cat.enabled !== false).length;
+    const disabledCategories = totalCategories - enabledCategories;
+    
+    summaryDiv.innerHTML = `
+        <strong>Resumo:</strong> 
+        Total: ${totalCategories} categorias | 
+        Habilitadas: <span style="color: green">${enabledCategories}</span> | 
+        Desabilitadas: <span style="color: red">${disabledCategories}</span>
+    `;
+}
+
+// Adiciona listener para atualizar o resumo quando as categorias são carregadas
+const originalDisplayCategories = displayCategories;
+displayCategories = function() {
+    originalDisplayCategories();
+    updateStatusSummary();
+};
+</script>
 </body>
 </html>

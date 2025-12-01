@@ -233,40 +233,33 @@ function editProduct(id) {
     }
 }
 
-
 function userCanDelete() {
     if (!currentUser || !currentUser.role) return false;
-    
     
     const role = currentUser.role.toUpperCase();
     return role === 'ADMIN' || role === 'EDITOR';
 }
 
 async function deleteProduct(id) {
-    // 1. Confirmação
     if (!confirm('Are you sure you want to delete this product?')) {
         return;
     }
 
-    // 2. Autenticação (A mesma que usamos em deleteCategory)
     const username = "rey";
     const password = "rey-pass";
     const basicAuth = "Basic " + btoa(username + ":" + password);
 
     try {
-        // 3. Requisição com Header de Segurança
         const response = await fetch(`${API_BASE_URL}/products/${id}`, {
             method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json',
-                'Authorization': basicAuth // <--- Essencial para não dar erro 403
+                'Authorization': basicAuth
             }
         });
 
-        // 4. Tratamento de Respostas
         if (response.status === 204) {
             alert('Product deleted successfully!');
-            // Recarrega a lista do servidor para garantir que sumiu
             loadProductsFromApi(); 
         } else if (response.status === 403) {
             alert('⛔ Error: You do not have permission to delete products (Admin/Editor only).');
@@ -356,7 +349,6 @@ async function loadEditForm() {
             detailsContainer.appendChild(detailDiv);
         });
 
-        // preserve creation time for update payload
         const creationTimeField = document.getElementById('creationTime');
         if (creationTimeField) {
             creationTimeField.value = product.creationTime;
@@ -461,6 +453,522 @@ function displayFilteredProducts(filteredProducts) {
     });
 }
 
+// Category status management with localStorage
+function getCategoryStatusFromStorage() {
+    return JSON.parse(localStorage.getItem('categoryStatus')) || {};
+}
+
+function saveCategoryStatusToStorage(statusMap) {
+    localStorage.setItem('categoryStatus', JSON.stringify(statusMap));
+}
+
+function toggleCategoryStatusInStorage(id) {
+    const statusMap = getCategoryStatusFromStorage();
+    const currentStatus = statusMap[id] !== false;
+    statusMap[id] = !currentStatus;
+    saveCategoryStatusToStorage(statusMap);
+    return statusMap[id];
+}
+
+function getCategoryStatus(id) {
+    const statusMap = getCategoryStatusFromStorage();
+    return statusMap[id] !== false;
+}
+
+function setCategoryStatus(id, enabled) {
+    const statusMap = getCategoryStatusFromStorage();
+    statusMap[id] = enabled;
+    saveCategoryStatusToStorage(statusMap);
+}
+
+function initializeCategoryStatusSystem() {
+    if (!localStorage.getItem('categoryStatus')) {
+        localStorage.setItem('categoryStatus', JSON.stringify({}));
+    }
+}
+
+async function toggleCategoryStatus(id) {
+    const newStatus = toggleCategoryStatusInStorage(id);
+    
+    const category = allCategories.find(cat => cat.id === id);
+    if (category) {
+        category.enabled = newStatus;
+    }
+    
+    displayCategories();
+    
+    alert(`Categoria ${newStatus ? 'habilitada' : 'desabilitada'} com sucesso!`);
+}
+
+async function createCategory(event) {
+    event.preventDefault();
+    const name = document.getElementById('categoryName').value;
+    const description = document.getElementById('categoryDescription').value;
+    const parentCategoryIdRaw = document.getElementById('parentCategoryId').value;
+    const parentCategoryId = parentCategoryIdRaw ? parseInt(parentCategoryIdRaw) : null;
+    const enabled = document.getElementById('categoryEnabled').checked;
+    const statusDiv = document.getElementById('categoryStatus');
+
+    statusDiv.textContent = 'Enviando...';
+
+    const username = "rey";
+    const password = "rey-pass";
+    const basicAuth = "Basic " + btoa(username + ":" + password);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`, {
+            method: 'POST',
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': basicAuth
+            },
+            body: JSON.stringify({
+                name,
+                description,
+                parentCategoryId
+            })
+        });
+
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || 'Erro ao criar categoria');
+        }
+
+        const createdCategory = await response.json();
+        
+        setCategoryStatus(createdCategory.id, enabled);
+        
+        const newCategory = {
+            ...createdCategory,
+            enabled: enabled
+        };
+        allCategories.push(newCategory);
+        
+        statusDiv.textContent = 'Categoria criada com sucesso.';
+        statusDiv.style.color = 'green';
+        
+        document.getElementById('categoryForm').reset();
+        
+        currentCategoryPage = 1;
+        displayCategories();
+        
+        setTimeout(() => { statusDiv.textContent = ''; }, 3000);
+
+    } catch (error) {
+        console.error(error);
+        statusDiv.textContent = 'Falha ao criar: ' + error.message;
+        statusDiv.style.color = 'red';
+    }
+}
+
+async function loadCategories() {
+    const tableBody = document.getElementById('categoryList');
+    if (!tableBody) return;
+    
+    tableBody.innerHTML = '<tr><td colspan="6">Carregando...</td></tr>';
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories`);
+        
+        if (!response.ok) {
+            throw new Error('Falha ao carregar categorias');
+        }
+        
+        const categories = await response.json();
+        
+        const statusMap = getCategoryStatusFromStorage();
+        
+        allCategories = categories.map(cat => ({
+            ...cat,
+            enabled: statusMap[cat.id] !== false
+        }));
+        
+        currentCategoryPage = 1;
+        
+        updateBreadcrumb();
+        
+        displayCategories();
+        
+    } catch (error) {
+        console.error(error);
+        tableBody.innerHTML = '<tr><td colspan="6" style="color:red">Erro ao carregar categorias.</td></tr>';
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm(`Tem certeza que deseja excluir a categoria ID ${id}?`)) {
+        return;
+    }
+
+    const username = "rey";
+    const password = "rey-pass";
+    const basicAuth = "Basic " + btoa(username + ":" + password);
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': basicAuth 
+            }
+        });
+
+        if (response.status === 204) {
+            alert('Categoria excluída com sucesso!');
+            allCategories = allCategories.filter(cat => cat.id !== id);
+            loadCategories();
+            
+        } else if (response.status === 409) {
+            alert('❌ ERRO: Não é possível excluir pois existem produtos nesta categoria.');
+            
+        } else if (response.status === 403) {
+            alert('⛔ ERRO: Credenciais inválidas ou sem permissão.');
+            
+        } else if (response.status === 404) {
+            alert('Erro: Categoria não encontrada no sistema.');
+            allCategories = allCategories.filter(cat => cat.id !== id);
+            loadCategories();
+            
+        } else {
+            const text = await response.text();
+            alert('Ocorreu um erro: ' + text);
+        }
+
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        alert('Erro de conexão com o servidor.');
+    }
+}
+
+const CATEGORIES_PER_PAGE = 10;
+let currentCategoryPage = 1;
+let allCategories = [];
+let filteredCategories = [];
+
+function updateBreadcrumb(categoryPath = []) {
+    const breadcrumbDiv = document.getElementById('breadcrumb');
+    if (!breadcrumbDiv) return;
+
+    let breadcrumbHtml = '<a href="#" onclick="goToCategoryHome()">Início</a>';
+
+    if (categoryPath && categoryPath.length > 0) {
+        categoryPath.forEach((cat, index) => {
+            breadcrumbHtml += ` / <a href="#" onclick="goToCategoryPath(${index})">${cat.name}</a>`;
+        });
+    }
+
+    breadcrumbDiv.innerHTML = `<span id="breadcrumbPath">${breadcrumbHtml}</span>`;
+}
+
+function goToCategoryHome() {
+    currentCategoryPage = 1;
+    loadCategories();
+    updateBreadcrumb();
+}
+
+function goToCategoryPath(index) {
+    const breadcrumbDiv = document.getElementById('breadcrumb');
+    if (breadcrumbDiv) {
+        const links = breadcrumbDiv.querySelectorAll('a');
+        const path = [];
+        
+        links.forEach((link, i) => {
+            if (i > 0) {
+                path.push({
+                    name: link.textContent,
+                    id: parseInt(link.getAttribute('data-id') || '0')
+                });
+            }
+        });
+        
+        const truncatedPath = path.slice(0, index);
+        updateBreadcrumb(truncatedPath);
+    }
+}
+
+function sortCategoriesAlphabetically(categories) {
+    return categories.sort((a, b) => {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        return nameA.localeCompare(nameB);
+    });
+}
+
+function filterCategories(categories) {
+    const showOnlyEnabled = document.getElementById('showOnlyEnabled')?.checked || false;
+    const showSubcategories = document.getElementById('showSubcategories')?.checked || false;
+    
+    let filtered = [...categories];
+    
+    if (showOnlyEnabled) {
+        filtered = filtered.filter(cat => cat.enabled !== false);
+    }
+    
+    if (!showSubcategories) {
+        filtered = filtered.filter(cat => !cat.parentCategoryId);
+    }
+    
+    return filtered;
+}
+
+function organizeCategoriesHierarchically(categories) {
+    const categoryMap = new Map();
+    const rootCategories = [];
+    
+    categories.forEach(cat => {
+        categoryMap.set(cat.id, {
+            ...cat,
+            subcategories: []
+        });
+    });
+    
+    categories.forEach(cat => {
+        const categoryObj = categoryMap.get(cat.id);
+        
+        if (cat.parentCategoryId && categoryMap.has(cat.parentCategoryId)) {
+            const parent = categoryMap.get(cat.parentCategoryId);
+            parent.subcategories.push(categoryObj);
+        } else {
+            rootCategories.push(categoryObj);
+        }
+    });
+    
+    sortCategoriesAlphabetically(rootCategories);
+    
+    rootCategories.forEach(cat => {
+        if (cat.subcategories.length > 0) {
+            cat.subcategories = sortCategoriesAlphabetically(cat.subcategories);
+        }
+    });
+    
+    return rootCategories;
+}
+
+function flattenCategoriesForDisplay(hierarchicalCategories, onlyEnabled = true) {
+    const flattened = [];
+    
+    function addCategory(cat, level = 0) {
+        if (onlyEnabled && cat.enabled === false) {
+            return;
+        }
+        
+        flattened.push({
+            ...cat,
+            level: level,
+            displayName: '→'.repeat(level) + ' ' + cat.name
+        });
+        
+        if (cat.subcategories && cat.subcategories.length > 0) {
+            cat.subcategories.forEach(subcat => {
+                addCategory(subcat, level + 1);
+            });
+        }
+    }
+    
+    hierarchicalCategories.forEach(cat => {
+        addCategory(cat, 0);
+    });
+    
+    return flattened;
+}
+
+function displayCategories() {
+    const tableBody = document.getElementById('categoryList');
+    if (!tableBody) return;
+    
+    filteredCategories = filterCategories(allCategories);
+    
+    const hierarchicalCategories = organizeCategoriesHierarchically(filteredCategories);
+    
+    const displayCategories = flattenCategoriesForDisplay(
+        hierarchicalCategories, 
+        document.getElementById('showOnlyEnabled')?.checked || false
+    );
+    
+    const totalPages = Math.ceil(displayCategories.length / CATEGORIES_PER_PAGE);
+    const startIndex = (currentCategoryPage - 1) * CATEGORIES_PER_PAGE;
+    const endIndex = startIndex + CATEGORIES_PER_PAGE;
+    const paginatedCategories = displayCategories.slice(startIndex, endIndex);
+    
+    tableBody.innerHTML = '';
+    
+    if (paginatedCategories.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="6">Nenhuma categoria encontrada.</td></tr>';
+        return;
+    }
+    
+    const canDelete = userCanDelete();
+    
+    paginatedCategories.forEach(cat => {
+        const tr = document.createElement('tr');
+        
+        const parentCategory = allCategories.find(c => c.id === cat.parentCategoryId);
+        const parentName = parentCategory ? parentCategory.name : '-';
+        
+        let htmlContent = `
+            <td>${cat.id ?? ''}</td>
+            <td style="padding-left: ${cat.level * 20}px">
+                ${cat.level > 0 ? '├─ ' : ''}${cat.name ?? ''}
+            </td>
+            <td>${cat.description ?? '-'}</td>
+            <td>${parentName}</td>
+            <td>
+                <span style="color: ${cat.enabled !== false ? 'green' : 'red'}; font-weight: bold;">
+                    ${cat.enabled !== false ? '✓ Habilitada' : '✗ Desabilitada'}
+                </span>
+            </td>
+            <td>
+        `;
+
+        if (canDelete) {
+            htmlContent += `
+                <button onclick="deleteCategory(${cat.id})" 
+                        style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin-right: 5px;">
+                    Excluir
+                </button>
+                <button onclick="toggleCategoryStatus(${cat.id})"
+                        style="background-color: ${cat.enabled !== false ? '#ffc107' : '#28a745'}; color: ${cat.enabled !== false ? '#000' : 'white'}; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                    ${cat.enabled !== false ? 'Desabilitar' : 'Habilitar'}
+                </button>
+            `;
+        } else {
+            htmlContent += `<span style="color: gray; font-size: 0.9em;">🔒 Restrito</span>`;
+        }
+
+        htmlContent += `</td>`;
+        
+        tr.innerHTML = htmlContent;
+        tableBody.appendChild(tr);
+    });
+    
+    displayCategoryPagination(totalPages);
+    updateStatusSummary();
+}
+
+function displayCategoryPagination(totalPages) {
+    const paginationContainer = document.getElementById('pagination');
+    if (!paginationContainer) return;
+    
+    paginationContainer.innerHTML = '';
+    
+    if (totalPages <= 1) return;
+    
+    if (currentCategoryPage > 1) {
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '← Anterior';
+        prevButton.onclick = () => {
+            currentCategoryPage--;
+            displayCategories();
+        };
+        paginationContainer.appendChild(prevButton);
+    }
+    
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentCategoryPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+    
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+    
+    for (let i = startPage; i <= endPage; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.onclick = () => {
+            currentCategoryPage = i;
+            displayCategories();
+        };
+        
+        if (i === currentCategoryPage) {
+            button.style.fontWeight = 'bold';
+            button.style.backgroundColor = '#007bff';
+            button.style.color = 'white';
+        }
+        
+        paginationContainer.appendChild(button);
+    }
+    
+    if (currentCategoryPage < totalPages) {
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Próxima →';
+        nextButton.onclick = () => {
+            currentCategoryPage++;
+            displayCategories();
+        };
+        paginationContainer.appendChild(nextButton);
+    }
+    
+    const infoSpan = document.createElement('span');
+    infoSpan.textContent = ` Página ${currentCategoryPage} de ${totalPages}`;
+    infoSpan.style.marginLeft = '10px';
+    infoSpan.style.alignSelf = 'center';
+    paginationContainer.appendChild(infoSpan);
+}
+
+function updateStatusSummary() {
+    const summaryDiv = document.getElementById('statusSummary');
+    if (!summaryDiv) return;
+    
+    const statusMap = getCategoryStatusFromStorage();
+    const totalCategories = allCategories.length;
+    const enabledCategories = allCategories.filter(cat => cat.enabled !== false).length;
+    const disabledCategories = totalCategories - enabledCategories;
+    
+    summaryDiv.innerHTML = `
+        <strong>Resumo:</strong> 
+        Total: ${totalCategories} categorias | 
+        Habilitadas: <span style="color: green">${enabledCategories}</span> | 
+        Desabilitadas: <span style="color: red">${disabledCategories}</span>
+        | <button onclick="exportCategoryStatus()" style="background-color: #6c757d; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">
+            Exportar Status
+        </button>
+        <button onclick="importCategoryStatus()" style="background-color: #17a2b8; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">
+            Importar Status
+        </button>
+    `;
+}
+
+function exportCategoryStatus() {
+    const statusMap = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    const dataStr = JSON.stringify(statusMap, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    
+    const exportFileDefaultName = 'category-status-backup.json';
+    
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+    
+    alert('Status das categorias exportado com sucesso!');
+}
+
+function importCategoryStatus() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+    
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+        
+        reader.onload = function(e) {
+            try {
+                const importedStatus = JSON.parse(e.target.result);
+                localStorage.setItem('categoryStatus', JSON.stringify(importedStatus));
+                alert('Status importado com sucesso! Recarregando categorias...');
+                loadCategories();
+            } catch (error) {
+                alert('Erro ao importar arquivo. Certifique-se de que é um JSON válido.');
+            }
+        };
+        
+        reader.readAsText(file);
+    };
+    
+    input.click();
+}
+
 // Event listeners
 document.addEventListener('DOMContentLoaded', () => {
     initializeProducts();
@@ -524,19 +1032,29 @@ document.addEventListener('DOMContentLoaded', () => {
             document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
             document.getElementById('logoutBtn').addEventListener('click', logout);
             document.getElementById('categoryForm').addEventListener('submit', createCategory);
+            
+            initializeCategoryStatusSystem();
+            
+            const showOnlyEnabledCheckbox = document.getElementById('showOnlyEnabled');
+            const showSubcategoriesCheckbox = document.getElementById('showSubcategories');
+            
+            if (showOnlyEnabledCheckbox) {
+                showOnlyEnabledCheckbox.addEventListener('change', displayCategories);
+            }
+            
+            if (showSubcategoriesCheckbox) {
+                showSubcategoriesCheckbox.addEventListener('change', displayCategories);
+            }
+            
             loadCategories();
         }
     }
 });
 
-
-// const PRODUCT_DATA_VERSION = 1; // Increment this when you update the initial product list
-
 function initializeProducts() {
     loadProductsFromApi();
 }
 
-// Admin function to reset products
 function resetProductsToInitial() {
     if (confirm("Are you sure you want to reset the product list to its initial state? This will delete any custom products.")) {
         loadProductsFromApi();
@@ -544,167 +1062,6 @@ function resetProductsToInitial() {
 }
 
 function getUnsplashImage(width, height, category) {
-    // Usamos o serviço 'placehold.co' que é rápido e não bloqueia.
-    // Ele gera uma imagem cinza com o nome da categoria escrito.
-    // Exemplo de URL gerada: https://placehold.co/200x200?text=Music
-    
-    // Codificamos a categoria para garantir que espaços e acentos não quebrem a URL
     const text = encodeURIComponent(category || 'Produto');
-    
     return `https://placehold.co/${width}x${height}?text=${text}`;
-}
-
-async function createCategory(event) {
-    event.preventDefault();
-    const name = document.getElementById('categoryName').value;
-    const description = document.getElementById('categoryDescription').value;
-    const parentCategoryIdRaw = document.getElementById('parentCategoryId').value;
-    const parentCategoryId = parentCategoryIdRaw ? parseInt(parentCategoryIdRaw) : null;
-    const statusDiv = document.getElementById('categoryStatus');
-
-    statusDiv.textContent = 'Enviando...';
-
-    // --- AUTENTICAÇÃO (Igual ao Delete) ---
-    const username = "rey";
-    const password = "rey-pass";
-    const basicAuth = "Basic " + btoa(username + ":" + password);
-
-    try {
-        // A URL já está correta com /api/categories
-        const response = await fetch(`${API_BASE_URL}/api/categories`, {
-            method: 'POST',
-            headers: { 
-                'Content-Type': 'application/json',
-                'Authorization': basicAuth // <--- ADICIONADO O HEADER DE SEGURANÇA
-            },
-            body: JSON.stringify({
-                name,
-                description,
-                parentCategoryId
-            })
-        });
-
-        if (!response.ok) {
-            const message = await response.text();
-            throw new Error(message || 'Erro ao criar categoria');
-        }
-
-        statusDiv.textContent = 'Categoria criada com sucesso.';
-        statusDiv.style.color = 'green'; // Feedback visual
-        
-        document.getElementById('categoryForm').reset();
-        await loadCategories(); // Recarrega a lista
-        
-        // Limpa a mensagem de sucesso após 3 segundos
-        setTimeout(() => { statusDiv.textContent = ''; }, 3000);
-
-    } catch (error) {
-        console.error(error);
-        statusDiv.textContent = 'Falha ao criar: ' + error.message;
-        statusDiv.style.color = 'red';
-    }
-}
-
-async function loadCategories() {
-    const tableBody = document.getElementById('categoryList');
-    if (!tableBody) return;
-    
-    // Mostra loading
-    tableBody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
-
-    try {
-
-        const response = await fetch(`${API_BASE_URL}/api/categories`); 
-        
-        if (!response.ok) {
-            throw new Error('Falha ao carregar categorias');
-        }
-        
-        const categories = await response.json();
-        
-        if (!categories.length) {
-            tableBody.innerHTML = '<tr><td colspan="5">Nenhuma categoria encontrada.</td></tr>';
-            return;
-        }
-
-        tableBody.innerHTML = ''; 
-        
-        const canDelete = userCanDelete();
-
-        categories.forEach(cat => {
-            const tr = document.createElement('tr');
-            
-            let htmlContent = `
-                <td>${cat.id ?? ''}</td>
-                <td>${cat.name ?? ''}</td>
-                <td>${cat.description ?? '-'}</td>
-                <td>${cat.parentCategoryId ?? '-'}</td>
-                <td>
-            `;
-
-            if (canDelete) {
-                htmlContent += `
-                    <button onclick="deleteCategory(${cat.id})" 
-                            style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
-                        Excluir
-                    </button>`;
-            } else {
-                htmlContent += `<span style="color: gray; font-size: 0.9em;">🔒 Restrito</span>`;
-            }
-
-            htmlContent += `</td>`; 
-            
-            tr.innerHTML = htmlContent;
-            tableBody.appendChild(tr);
-        });
-
-    } catch (error) {
-        console.error(error);
-        tableBody.innerHTML = '<tr><td colspan="5" style="color:red">Erro ao carregar categorias.</td></tr>';
-    }
-}
-
-async function deleteCategory(id) {
-    if (!confirm(`Tem certeza que deseja excluir a categoria ID ${id}?`)) {
-        return;
-    }
-
-    // Credenciais para o Basic Auth (mesmas do SecurityConfig)
-    const username = "rey";
-    const password = "rey-pass";
-    const basicAuth = "Basic " + btoa(username + ":" + password);
-
-    try {
-        // --- CORREÇÃO AQUI: Adicionado /api na URL ---
-        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
-            method: 'DELETE',
-            headers: {
-                'Content-Type': 'application/json',
-                'Authorization': basicAuth 
-            }
-        });
-
-        if (response.status === 204) {
-            alert('Categoria excluída com sucesso!');
-            loadCategories(); // Atualiza a tabela
-            
-        } else if (response.status === 409) {
-            alert('❌ ERRO: Não é possível excluir pois existem produtos nesta categoria.');
-            
-        } else if (response.status === 403) {
-            alert('⛔ ERRO: Credenciais inválidas ou sem permissão.');
-            
-        } else if (response.status === 404) {
-             // Agora tratamos o 404 caso o ID realmente não exista no banco
-            alert('Erro: Categoria não encontrada no sistema.');
-            
-        } else {
-            const text = await response.text();
-            alert('Ocorreu um erro: ' + text);
-        }
-
-    } catch (error) {
-        console.error("Erro na requisição:", error);
-        alert('Erro de conexão com o servidor.');
-    }
 }
