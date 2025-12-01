@@ -4,20 +4,24 @@ import com.musicstore.bluevelvet.api.request.CategoryRequest;
 import com.musicstore.bluevelvet.api.response.CategoryResponse;
 import com.musicstore.bluevelvet.domain.exception.CategoryNotFoundException;
 import com.musicstore.bluevelvet.infrastructure.CategoryRepository;
+import com.musicstore.bluevelvet.infrastructure.repository.ProductRepository;
+import lombok.RequiredArgsConstructor;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.*;
+import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.util.List;
 import java.util.stream.Collectors;
-
+@Log4j2
 @Service
+@RequiredArgsConstructor
 public class CategoryService {
 
     private final CategoryRepository repository;
+    private final ProductRepository productRepository;
 
-    public CategoryService(CategoryRepository repository) {
-        this.repository = repository;
-    }
 
     public CategoryResponse create(CategoryRequest request) {
         Category parentCategory = null;
@@ -63,4 +67,21 @@ public class CategoryService {
         // Caso contrário, ordenação ascendente
         return repository.findAllTopLevelSortedAsc(pageable);
     }
+
+    //Método para deletar categorias
+    public void delete(Long id) {
+        // 1. Primeiro buscamos a categoria pelo ID para saber qual é o NOME dela
+        Category category = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Categoria não encontrada"));
+
+        // 2. Agora perguntamos ao ProductRepository usando o NOME (String)
+        // Note que usamos .existsByCategory (o método novo) e passamos .getName()
+        if (productRepository.existsByCategory(category.getName())) {
+            throw new ResponseStatusException(HttpStatus.CONFLICT, "Não é possível excluir: Existem produtos vinculados a esta categoria.");
+        }
+
+        // 3. Se não tem produtos com esse nome, pode apagar
+        repository.deleteById(id);
+    }
 }
+

@@ -1,12 +1,15 @@
 CREATE DATABASE IF NOT EXISTS bluevelvet;
 USE bluevelvet;
 
+
+SET FOREIGN_KEY_CHECKS = 0;
 -- Reset existing data
-DELETE FROM categories;
 DELETE FROM product_detail;
 DELETE FROM box_dimension;
 DELETE FROM product;
+DELETE FROM categories;
 
+SET FOREIGN_KEY_CHECKS = 1;
 -- Categories seed
 INSERT INTO categories (id, name, description, parent_id) VALUES
 (1, 'CD', 'Discos físicos', NULL),

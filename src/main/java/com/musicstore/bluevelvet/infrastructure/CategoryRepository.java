@@ -9,6 +9,10 @@ import org.springframework.stereotype.Repository;
 @Repository
 public interface CategoryRepository extends JpaRepository<Category, Long> {
 
+
+
+
+
     // Lista categorias ordenadas ascendentemente,
     // priorizando categorias que NÃO têm pai.
     @Query("""

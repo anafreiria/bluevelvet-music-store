@@ -2,6 +2,7 @@ package com.musicstore.bluevelvet.api.response;
 
 import com.musicstore.bluevelvet.api.request.ProductDetailRequest;
 import com.musicstore.bluevelvet.api.request.ProductDimensionRequest;
+import com.musicstore.bluevelvet.domain.Category;
 import lombok.*;
 
 import java.math.BigDecimal;

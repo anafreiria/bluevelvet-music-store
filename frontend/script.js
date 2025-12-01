@@ -233,23 +233,54 @@ function editProduct(id) {
     }
 }
 
-function deleteProduct(id) {
+
+function userCanDelete() {
+    if (!currentUser || !currentUser.role) return false;
+    
+    
+    const role = currentUser.role.toUpperCase();
+    return role === 'ADMIN' || role === 'EDITOR';
+}
+
+async function deleteProduct(id) {
+    // 1. Confirmação
     if (!confirm('Are you sure you want to delete this product?')) {
         return;
     }
 
-    fetch(`${API_BASE_URL}/products/${id}`, { method: 'DELETE' })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to delete product');
+    // 2. Autenticação (A mesma que usamos em deleteCategory)
+    const username = "rey";
+    const password = "rey-pass";
+    const basicAuth = "Basic " + btoa(username + ":" + password);
+
+    try {
+        // 3. Requisição com Header de Segurança
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': basicAuth // <--- Essencial para não dar erro 403
             }
-            products = products.filter(p => p.id !== id);
-            displayProducts();
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Error deleting product.');
         });
+
+        // 4. Tratamento de Respostas
+        if (response.status === 204) {
+            alert('Product deleted successfully!');
+            // Recarrega a lista do servidor para garantir que sumiu
+            loadProductsFromApi(); 
+        } else if (response.status === 403) {
+            alert('⛔ Error: You do not have permission to delete products (Admin/Editor only).');
+        } else if (response.status === 404) {
+            alert('Error: Product not found.');
+        } else {
+            const text = await response.text();
+            throw new Error(text || 'Failed to delete product');
+        }
+
+    } catch (error) {
+        console.error(error);
+        alert('Error deleting product: ' + error.message);
+    }
 }
 
 async function loadProductDetails() {
@@ -513,7 +544,14 @@ function resetProductsToInitial() {
 }
 
 function getUnsplashImage(width, height, category) {
-    return `https://source.unsplash.com/random/${width}x${height}?${category}`;
+    // Usamos o serviço 'placehold.co' que é rápido e não bloqueia.
+    // Ele gera uma imagem cinza com o nome da categoria escrito.
+    // Exemplo de URL gerada: https://placehold.co/200x200?text=Music
+    
+    // Codificamos a categoria para garantir que espaços e acentos não quebrem a URL
+    const text = encodeURIComponent(category || 'Produto');
+    
+    return `https://placehold.co/${width}x${height}?text=${text}`;
 }
 
 async function createCategory(event) {
@@ -526,10 +564,19 @@ async function createCategory(event) {
 
     statusDiv.textContent = 'Enviando...';
 
+    // --- AUTENTICAÇÃO (Igual ao Delete) ---
+    const username = "rey";
+    const password = "rey-pass";
+    const basicAuth = "Basic " + btoa(username + ":" + password);
+
     try {
+        // A URL já está correta com /api/categories
         const response = await fetch(`${API_BASE_URL}/api/categories`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
+            headers: { 
+                'Content-Type': 'application/json',
+                'Authorization': basicAuth // <--- ADICIONADO O HEADER DE SEGURANÇA
+            },
             body: JSON.stringify({
                 name,
                 description,
@@ -543,42 +590,121 @@ async function createCategory(event) {
         }
 
         statusDiv.textContent = 'Categoria criada com sucesso.';
+        statusDiv.style.color = 'green'; // Feedback visual
+        
         document.getElementById('categoryForm').reset();
-        await loadCategories();
+        await loadCategories(); // Recarrega a lista
+        
+        // Limpa a mensagem de sucesso após 3 segundos
+        setTimeout(() => { statusDiv.textContent = ''; }, 3000);
+
     } catch (error) {
         console.error(error);
-        statusDiv.textContent = 'Falha ao criar categoria. Confira os dados e tente novamente.';
+        statusDiv.textContent = 'Falha ao criar: ' + error.message;
+        statusDiv.style.color = 'red';
     }
 }
 
 async function loadCategories() {
     const tableBody = document.getElementById('categoryList');
     if (!tableBody) return;
-    tableBody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
+    
+    // Mostra loading
+    tableBody.innerHTML = '<tr><td colspan="5">Carregando...</td></tr>';
 
     try {
-        const response = await fetch(`${API_BASE_URL}/api/categories`);
+
+        const response = await fetch(`${API_BASE_URL}/api/categories`); 
+        
         if (!response.ok) {
             throw new Error('Falha ao carregar categorias');
         }
+        
         const categories = await response.json();
+        
         if (!categories.length) {
-            tableBody.innerHTML = '<tr><td colspan="4">Nenhuma categoria encontrada.</td></tr>';
+            tableBody.innerHTML = '<tr><td colspan="5">Nenhuma categoria encontrada.</td></tr>';
             return;
         }
-        tableBody.innerHTML = '';
+
+        tableBody.innerHTML = ''; 
+        
+        const canDelete = userCanDelete();
+
         categories.forEach(cat => {
             const tr = document.createElement('tr');
-            tr.innerHTML = `
+            
+            let htmlContent = `
                 <td>${cat.id ?? ''}</td>
                 <td>${cat.name ?? ''}</td>
-                <td>${cat.description ?? ''}</td>
-                <td>${cat.parentCategoryId ?? ''}</td>
+                <td>${cat.description ?? '-'}</td>
+                <td>${cat.parentCategoryId ?? '-'}</td>
+                <td>
             `;
+
+            if (canDelete) {
+                htmlContent += `
+                    <button onclick="deleteCategory(${cat.id})" 
+                            style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer;">
+                        Excluir
+                    </button>`;
+            } else {
+                htmlContent += `<span style="color: gray; font-size: 0.9em;">🔒 Restrito</span>`;
+            }
+
+            htmlContent += `</td>`; 
+            
+            tr.innerHTML = htmlContent;
             tableBody.appendChild(tr);
         });
+
     } catch (error) {
         console.error(error);
-        tableBody.innerHTML = '<tr><td colspan="4">Erro ao carregar categorias.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5" style="color:red">Erro ao carregar categorias.</td></tr>';
+    }
+}
+
+async function deleteCategory(id) {
+    if (!confirm(`Tem certeza que deseja excluir a categoria ID ${id}?`)) {
+        return;
+    }
+
+    // Credenciais para o Basic Auth (mesmas do SecurityConfig)
+    const username = "rey";
+    const password = "rey-pass";
+    const basicAuth = "Basic " + btoa(username + ":" + password);
+
+    try {
+        // --- CORREÇÃO AQUI: Adicionado /api na URL ---
+        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': basicAuth 
+            }
+        });
+
+        if (response.status === 204) {
+            alert('Categoria excluída com sucesso!');
+            loadCategories(); // Atualiza a tabela
+            
+        } else if (response.status === 409) {
+            alert('❌ ERRO: Não é possível excluir pois existem produtos nesta categoria.');
+            
+        } else if (response.status === 403) {
+            alert('⛔ ERRO: Credenciais inválidas ou sem permissão.');
+            
+        } else if (response.status === 404) {
+             // Agora tratamos o 404 caso o ID realmente não exista no banco
+            alert('Erro: Categoria não encontrada no sistema.');
+            
+        } else {
+            const text = await response.text();
+            alert('Ocorreu um erro: ' + text);
+        }
+
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        alert('Erro de conexão com o servidor.');
     }
 }

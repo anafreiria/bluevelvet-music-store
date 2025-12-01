@@ -14,21 +14,40 @@ import java.util.Objects;
 
 public class ProductConverter {
 
-    public static Product convertToProduct(ProductRequest request){
-        return Product.builder()
-                .name(request.getName())
-                .shortDescription(request.getShortDescription())
-                .fullDescription(request.getFullDescription())
-                .brand(request.getBrand())
-                .category(request.getCategory())
-                .cost(request.getCost())
-                .creationTime(request.getCreationTime())
-                .updateTime(request.getUpdateTime())
-                .enabled(request.getIsEnabled())
-                .inStock(request.getInStock())
-                .listPrice(request.getListPrice())
-                .discount(request.getDiscount())
-                .build();
+    public static Product convertToProduct(ProductRequest request) {
+        Product product = new Product();
+
+        product.setName(request.getName());
+        product.setShortDescription(request.getShortDescription());
+        product.setFullDescription(request.getFullDescription());
+        product.setBrand(request.getBrand());
+
+        // ⚠️ NOTA IMPORTANTE:
+        // Não definimos a categoria aqui (product.setCategory).
+        // O request tem uma String/ID, e o Product espera um Objeto Category.
+        // Isso agora é feito manualmente lá no ProductService.java.
+
+        product.setListPrice(request.getListPrice());
+        product.setDiscount(request.getDiscount());
+        product.setCost(request.getCost());
+
+        product.setEnabled(request.getIsEnabled());
+        product.setInStock(request.getInStock());
+
+        // Tratamento de datas (caso venham nulas, usa o momento atual)
+        if (request.getCreationTime() != null) {
+            product.setCreationTime(request.getCreationTime());
+        } else {
+            product.setCreationTime(java.time.LocalDateTime.now());
+        }
+
+        if (request.getUpdateTime() != null) {
+            product.setUpdateTime(request.getUpdateTime());
+        } else {
+            product.setUpdateTime(java.time.LocalDateTime.now());
+        }
+
+        return product;
     }
 
     public static ProductResponse convertToProductResponse(Product product) {
@@ -38,14 +57,18 @@ public class ProductConverter {
                 .shortDescription(product.getShortDescription())
                 .fullDescription(product.getFullDescription())
                 .brand(product.getBrand())
+
+                // --- CORREÇÃO: Envia o objeto Categoria (ou null se não tiver) ---
                 .category(product.getCategory())
-                .cost(product.getCost())
-                .creationTime(product.getCreationTime())
-                .updateTime(product.getUpdateTime())
-                .isEnabled(product.getEnabled())
-                .inStock(product.getInStock())
+                // ----------------------------------------------------------------
+
                 .listPrice(product.getListPrice())
                 .discount(product.getDiscount())
+                .isEnabled(product.getEnabled())
+                .inStock(product.getInStock())
+                .creationTime(product.getCreationTime())
+                .updateTime(product.getUpdateTime())
+                .cost(product.getCost())
                 .dimension(convertBoxDimensionRequest(product))
                 .details(convertProductDetailsRequest(product))
                 .build();

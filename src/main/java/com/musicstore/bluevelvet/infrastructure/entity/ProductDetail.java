@@ -1,5 +1,6 @@
 package com.musicstore.bluevelvet.infrastructure.entity;
 
+import com.musicstore.bluevelvet.domain.Category;
 import jakarta.persistence.*;
 import lombok.*;
 
@@ -26,4 +27,7 @@ public class ProductDetail implements Serializable {
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private Product product;
 
+    @ManyToOne
+    @JoinColumn(name = "category_id") // O nome da coluna no banco
+    private Category category;
 }

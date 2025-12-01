@@ -6,11 +6,8 @@ import com.musicstore.bluevelvet.domain.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.security.access.prepost.PreAuthorize;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -32,5 +29,17 @@ public class CategoryRestController {
     public ResponseEntity<List<CategoryResponse>> listCategories() {
         log.info("Request received to list categories");
         return ResponseEntity.ok(categoryService.listAll());
+    }
+
+    @DeleteMapping("/{id}")
+    @PreAuthorize("hasAnyRole('ADMIN', 'EDITOR')")
+    public ResponseEntity<Void> deleteCategory(@PathVariable Long id) {
+        log.info("REST CONTROLLER: Recebida requisição para deletar ID: {}", id);
+
+        // Aqui é onde acontece a mágica.
+        // Se você descomentar/adicionar essa linha, o IntelliJ vai mostrar "1 uso" no Service.
+        categoryService.delete(id);
+
+        return ResponseEntity.noContent().build();
     }
 }
