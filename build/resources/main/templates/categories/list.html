@@ -10,6 +10,7 @@
         th { background-color: #f2f2f2; }
         .pagination { margin-top: 12px; }
         .pagination a, .pagination span { margin-right: 8px; text-decoration: none; }
+        .btn { padding: 5px 10px; background: #007bff; color: white; text-decoration: none; border-radius: 4px; }
     </style>
 </head>
 <body>
@@ -30,18 +31,27 @@
         <th>Name</th>
         <th>Description</th>
         <th>Parent</th>
-    </tr>
+        <th>Status</th> <th>Actions</th> </tr>
     </thead>
 
     <tbody>
-    <tr th:if="${#lists.isEmpty(categoriesPage.content)}">
-        <td colspan="3">No categories found.</td>
+    <tr th:if="${categoriesPage.content.empty}">
+        <td colspan="5">No categories found.</td>
     </tr>
 
     <tr th:each="cat : ${categoriesPage.content}">
         <td th:text="${cat.name}">Category name</td>
         <td th:text="${cat.description}">Category description</td>
         <td th:text="${cat.parentCategory != null ? cat.parentCategory.name : '-'}">Parent</td>
+
+        <td th:text="${cat.enabled ? 'Active' : 'Inactive'}"
+            style="font-weight: bold;"
+            th:styleappend="${cat.enabled} ? 'color: green;' : 'color: red;'">
+        </td>
+
+        <td>
+            <a th:href="@{/categories/edit/{id}(id=${cat.id})}" class="btn">Edit</a>
+        </td>
     </tr>
     </tbody>
 </table>

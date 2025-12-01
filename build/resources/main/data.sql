@@ -8,17 +8,18 @@ DELETE FROM box_dimension;
 DELETE FROM product;
 
 -- Categories seed
-INSERT INTO categories (id, name, description, parent_id) VALUES
-(1, 'CD', 'Discos físicos', NULL),
-(2, 'MP3', 'Downloads digitais', NULL),
-(3, 'T-Shirt', 'Camisetas e merch', NULL),
-(4, 'Book', 'Livros e guiass', NULL),
-(5, 'Poster', 'Posters e arte', NULL),
-(6, 'Audio Equipment', 'Equipamentos de áudio', NULL),
-(7, 'Musical Instruments', 'Instrumentos musicais', NULL),
-(8, 'Vinyl Records', 'LPs e vinis', NULL),
-(9, 'Digital Downloads', 'Músicas digitais', NULL),
-(10, 'Apparel', 'Vestuário e merch', NULL);
+-- Categories seed
+INSERT INTO categories (id, name, description, parent_id, enabled) VALUES
+                                                                       (1, 'CD', 'Discos físicos', NULL, 1),
+                                                                       (2, 'MP3', 'Downloads digitais', NULL, 1),
+                                                                       (3, 'T-Shirt', 'Camisetas e merch', NULL, 1),
+                                                                       (4, 'Book', 'Livros e guiass', NULL, 1),
+                                                                       (5, 'Poster', 'Posters e arte', NULL, 1),
+                                                                       (6, 'Audio Equipment', 'Equipamentos de áudio', NULL, 1),
+                                                                       (7, 'Musical Instruments', 'Instrumentos musicais', NULL, 1),
+                                                                       (8, 'Vinyl Records', 'LPs e vinis', NULL, 1),
+                                                                       (9, 'Digital Downloads', 'Músicas digitais', NULL, 1),
+                                                                       (10, 'Apparel', 'Vestuário e merch', NULL, 1);
 
 -- Products seed
 INSERT INTO product (id, name, short_description, full_description, brand, category, list_price, discount, enabled, in_stock, creation_time, update_time, cost) VALUES

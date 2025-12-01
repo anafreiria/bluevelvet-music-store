@@ -1,0 +1,67 @@
+<!DOCTYPE html>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <meta charset="UTF-8" />
+    <title>Edit Category</title>
+    <style>
+        body { font-family: Arial, sans-serif; padding: 20px; }
+        .form-group { margin-bottom: 15px; }
+        label { display: block; margin-bottom: 5px; font-weight: bold; }
+        input[type="text"], select { width: 100%; max-width: 400px; padding: 8px; }
+        .btn { padding: 10px 15px; background-color: #007bff; color: white; text-decoration: none; border: none; cursor: pointer;}
+        .btn-cancel { background-color: #6c757d; }
+    </style>
+</head>
+<body>
+
+<h2>Edit Category</h2>
+
+<form th:action="@{/categories/edit/{id}(id=${category.id})}"
+      method="post"
+      enctype="multipart/form-data"
+      th:object="${category}">
+
+    <div class="form-group">
+        <label>Name:</label>
+        <input type="text" name="name" th:value="${category.name}" required />
+    </div>
+
+    <div class="form-group">
+        <label>Description:</label>
+        <input type="text" name="description" th:value="${category.description}" />
+    </div>
+
+    <div class="form-group">
+        <label>Parent Category:</label>
+        <select name="parentCategoryId">
+            <option value="">None (Root)</option>
+            <option th:each="cat : ${listCategories}"
+                    th:value="${cat.id}"
+                    th:text="${cat.name}"
+                    th:selected="${category.parentCategory != null && category.parentCategory.id == cat.id}"
+                    th:if="${cat.id != category.id}"> </option>
+        </select>
+    </div>
+
+    <div class="form-group">
+        <label>Current Image:</label>
+        <span th:if="${category.image == null}">No image uploaded.</span>
+        <span th:if="${category.image != null}" th:text="${category.image}"></span>
+
+        <br/><br/>
+        <label>Upload New Image (Optional):</label>
+        <input type="file" name="imageFile" accept="image/png, image/jpeg" />
+        <small>If you leave this empty, the current image remains.</small>
+    </div>
+
+    <div class="form-group">
+        <label>Enabled:</label>
+        <input type="checkbox" name="enabled" th:checked="${category.enabled}" />
+    </div>
+
+    <button type="submit" class="btn">Save Changes</button>
+    <a href="/categories" class="btn btn-cancel">Cancel</a>
+</form>
+
+</body>
+</html>
