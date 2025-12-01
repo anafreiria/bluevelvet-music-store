@@ -10,29 +10,38 @@ public class Category {
     @GeneratedValue(strategy = GenerationType.IDENTITY)
     private Long id;
 
-    // Nome da categoria
     @Column(name = "name")
     private String name;
 
-    // Descrição opcional da categoria
     @Column(name = "description")
     private String description;
 
-    // Relacionamento para categoria pai (auto-relacionamento)
+    @Column(name = "image")
+    private String image;
+
+    @Column(name = "enabled")
+    private boolean enabled = true;
+
     @ManyToOne
     @JoinColumn(name = "parent_id")
     private Category parentCategory;
 
     public Category() {}
 
-    public Category(String name, String description, Category parentCategory) {
+    public Category(String name, String description, Category parentCategory, String image, boolean enabled) {
         this.name = name;
         this.description = description;
         this.parentCategory = parentCategory;
+        this.image = image;
+        this.enabled = enabled;
     }
 
     public Long getId() {
         return id;
+    }
+
+    public void setId(Long id) {
+        this.id = id;
     }
 
     public String getName() {
@@ -49,6 +58,22 @@ public class Category {
 
     public void setDescription(String description) {
         this.description = description;
+    }
+
+    public String getImage() {
+        return image;
+    }
+
+    public void setImage(String image) {
+        this.image = image;
+    }
+
+    public boolean isEnabled() {
+        return enabled;
+    }
+
+    public void setEnabled(boolean enabled) {
+        this.enabled = enabled;
     }
 
     public Category getParentCategory() {

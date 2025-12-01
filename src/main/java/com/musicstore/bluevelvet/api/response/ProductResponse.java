@@ -28,6 +28,8 @@ public class ProductResponse {
 
     private String category;
 
+    private String mainImage;
+
     private BigDecimal listPrice;
 
     private BigDecimal discount;

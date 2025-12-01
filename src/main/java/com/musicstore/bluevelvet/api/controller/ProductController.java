@@ -10,6 +10,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+import org.springframework.web.multipart.MultipartFile;
 
 @Log4j2
 @RestController
@@ -59,6 +60,13 @@ public class ProductController {
         log.info("Request received to update the product with id {} with the request {}", id, request);
 
         return ResponseEntity.ok(service.updateProduct(id, request));
+    }
+
+    @PostMapping("/{id}/image")
+    @Operation(summary = "Upload or replace product image", description = "Uploads a main image file for the product")
+    public ResponseEntity<ProductResponse> uploadProductImage(@PathVariable Long id, @RequestParam("file") MultipartFile file) {
+        log.info("Request received to upload image for product id {}", id);
+        return ResponseEntity.ok(service.updateProductImage(id, file));
     }
 
 }

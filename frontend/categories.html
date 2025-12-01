@@ -3,40 +3,63 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Criar Categoria - BlueVelvet Music Store</title>
+    <title>Categories - BlueVelvet Music Store</title>
     <link rel="stylesheet" href="css/style.css">
 </head>
 <body>
-<div class="container">
-    <h1>BlueVelvet Music Store</h1>
-    <h2>Criar Categoria</h2>
+<header>
+    <nav>
+        <div class="logo">BlueVelvet Admin</div>
+        <ul>
+            <li><a href="dashboard.html">Dashboard</a></li>
+            <li><a href="#" id="logoutBtn">Logout</a></li>
+        </ul>
+    </nav>
+    <div class="user-info" id="userInfo"></div>
+</header>
 
-    <div id="userInfo"></div>
-    <button id="logoutBtn">Logout</button>
-    <a href="dashboard.html" style="margin-left: 8px;">Voltar para Dashboard</a>
+<main>
+    <h2>Category Management</h2>
 
-    <form id="categoryForm" style="margin-top: 16px;">
-        <input type="text" id="categoryName" placeholder="Nome da categoria" required>
-        <textarea id="categoryDescription" placeholder="Descrição (opcional)"></textarea>
-        <input type="number" id="parentCategoryId" placeholder="ID da categoria pai (opcional)" min="1">
-        <button type="submit">Criar Categoria</button>
-    </form>
+    <section class="form-container">
+        <h3>Create New Category</h3>
+        <form id="categoryForm" enctype="multipart/form-data">
+            <input type="text" id="categoryName" placeholder="Category Name" required>
+            <input type="text" id="categoryDescription" placeholder="Description">
+            <input type="number" id="parentCategoryId" placeholder="Parent Category ID (Optional)">
+            <label for="categoryImage">Category Image (optional)</label>
+            <input type="file" id="categoryImage" accept="image/*">
+            <button type="submit">Add Category</button>
+        </form>
+        <div id="categoryStatus"></div>
+    </section>
 
-    <div id="categoryStatus" style="margin-top:12px;"></div>
+    <section class="list-container">
+        <h3>All Categories</h3>
+        <div class="filters">
+            <label for="categorySort">Sort by ID:</label>
+            <select id="categorySort">
+                <option value="asc" selected>Ascending</option>
+                <option value="desc">Descending</option>
+            </select>
+        </div>
+        <table id="categoriesTable">
+            <thead>
+            <tr>
+                <th>ID</th>
+                <th>Image</th>
+                <th>Name</th>
+                <th>Description</th>
+                <th>Parent ID</th>
+                <th>Actions</th> </tr>
+            </thead>
+            <tbody id="categoryList">
+            </tbody>
+        </table>
+        <div id="categoriesPagination"></div>
+    </section>
+</main>
 
-    <h3 style="margin-top:24px;">Categorias existentes</h3>
-    <table>
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Nome</th>
-            <th>Descrição</th>
-            <th>Categoria Pai</th>
-        </tr>
-        </thead>
-        <tbody id="categoryList"></tbody>
-    </table>
-</div>
 <script src="script.js"></script>
 </body>
 </html>

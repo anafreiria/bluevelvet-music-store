@@ -21,6 +21,7 @@ public class ProductConverter {
                 .fullDescription(request.getFullDescription())
                 .brand(request.getBrand())
                 .category(request.getCategory())
+                .mainImage(request.getMainImage())
                 .cost(request.getCost())
                 .creationTime(request.getCreationTime())
                 .updateTime(request.getUpdateTime())
@@ -32,6 +33,7 @@ public class ProductConverter {
     }
 
     public static ProductResponse convertToProductResponse(Product product) {
+        String imagePath = product.getMainImage() != null ? "/user-images/" + product.getMainImage() : null;
         return ProductResponse.builder()
                 .id(product.getId())
                 .name(product.getName())
@@ -39,6 +41,7 @@ public class ProductConverter {
                 .fullDescription(product.getFullDescription())
                 .brand(product.getBrand())
                 .category(product.getCategory())
+                .mainImage(imagePath)
                 .cost(product.getCost())
                 .creationTime(product.getCreationTime())
                 .updateTime(product.getUpdateTime())

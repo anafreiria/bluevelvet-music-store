@@ -5,12 +5,9 @@ import com.musicstore.bluevelvet.api.response.CategoryResponse;
 import com.musicstore.bluevelvet.domain.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
+import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.GetMapping;
-import org.springframework.web.bind.annotation.PostMapping;
-import org.springframework.web.bind.annotation.RequestBody;
-import org.springframework.web.bind.annotation.RequestMapping;
-import org.springframework.web.bind.annotation.RestController;
+import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
 
@@ -22,15 +19,28 @@ public class CategoryRestController {
 
     private final CategoryService categoryService;
 
-    @PostMapping
-    public ResponseEntity<CategoryResponse> createCategory(@RequestBody CategoryRequest request) {
-        log.info("Request received to create a category with name {}", request.getName());
+    @GetMapping
+    public ResponseEntity<?> listCategories(
+            @RequestParam(defaultValue = "0") int page,
+            @RequestParam(defaultValue = "5") int size,
+            @RequestParam(defaultValue = "asc") String sort) {
+        return ResponseEntity.ok(categoryService.listPaginatedResponses(page, size, sort));
+    }
+
+    @GetMapping("/{id}")
+    public ResponseEntity<CategoryResponse> getCategory(@PathVariable Long id) {
+        return ResponseEntity.ok(categoryService.findById(id));
+    }
+
+    @PostMapping(consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CategoryResponse> createCategory(@ModelAttribute CategoryRequest request) {
+        log.info("Creating category: {}", request.getName());
         return ResponseEntity.ok(categoryService.create(request));
     }
 
-    @GetMapping
-    public ResponseEntity<List<CategoryResponse>> listCategories() {
-        log.info("Request received to list categories");
-        return ResponseEntity.ok(categoryService.listAll());
+    @PutMapping(value = "/{id}", consumes = MediaType.MULTIPART_FORM_DATA_VALUE)
+    public ResponseEntity<CategoryResponse> updateCategory(@PathVariable Long id, @ModelAttribute CategoryRequest request) {
+        log.info("Updating category id: {}", id);
+        return ResponseEntity.ok(categoryService.update(id, request));
     }
 }

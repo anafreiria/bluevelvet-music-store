@@ -2,7 +2,7 @@ spring:
   datasource:
     url: jdbc:mysql://localhost:3306/bluevelvet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
-    password: suasenha
+    password: 
 
   jpa:
     hibernate:
@@ -15,7 +15,7 @@ spring:
     defer-datasource-initialization: true
   sql:
     init:
-      mode: always
+      mode: never # keep existing DB data (images/categorias) between restarts; run data.sql manually if needed
 
 server:
   port: 8081
