@@ -1,0 +1,54 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>Edit Category - BlueVelvet</title>
+  <link rel="stylesheet" href="css/style.css">
+</head>
+<body>
+<header>
+  <nav>
+    <div class="logo">BlueVelvet Admin</div>
+    <ul>
+      <li><a href="categories.html">Back to Categories</a></li>
+    </ul>
+  </nav>
+</header>
+
+<main>
+  <h2>Edit Category</h2>
+  <form id="editCategoryForm" class="form-container">
+    <input type="hidden" id="editCategoryId">
+
+    <label>Name:</label>
+    <input type="text" id="editName" required>
+
+    <label>Description:</label>
+    <input type="text" id="editDescription">
+
+    <label>Parent Category ID:</label>
+    <input type="number" id="editParentId">
+
+    <label>Status:</label>
+    <select id="editEnabled">
+      <option value="true">Active</option>
+      <option value="false">Inactive</option>
+    </select>
+
+    <label>Image:</label>
+    <input type="file" id="editImage">
+
+    <button type="submit">Save Changes</button>
+  </form>
+</main>
+
+<script src="script.js"></script>
+<script>
+  // Script simples para iniciar a edição
+  document.addEventListener('DOMContentLoaded', () => {
+    loadCategoryForEdit();
+  });
+</script>
+</body>
+</html>

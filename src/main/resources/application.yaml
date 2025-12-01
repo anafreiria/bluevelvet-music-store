@@ -1,8 +1,8 @@
 spring:
   datasource:
-    url: jdbc:mysql://localhost:3306/bluevelvet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
+    url: jdbc:mysql://localhost:3307/bluevelvet?useSSL=false&allowPublicKeyRetrieval=true&serverTimezone=UTC
     username: root
-    password: suasenha
+    password:
 
   jpa:
     hibernate:

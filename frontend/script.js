@@ -516,69 +516,128 @@ function getUnsplashImage(width, height, category) {
     return `https://source.unsplash.com/random/${width}x${height}?${category}`;
 }
 
+// --- CATEGORY MANAGEMENT ---
+
 async function createCategory(event) {
     event.preventDefault();
-    const name = document.getElementById('categoryName').value;
-    const description = document.getElementById('categoryDescription').value;
-    const parentCategoryIdRaw = document.getElementById('parentCategoryId').value;
-    const parentCategoryId = parentCategoryIdRaw ? parseInt(parentCategoryIdRaw) : null;
-    const statusDiv = document.getElementById('categoryStatus');
+    const formData = new FormData();
+    formData.append('name', document.getElementById('categoryName').value);
+    formData.append('description', document.getElementById('categoryDescription').value);
 
-    statusDiv.textContent = 'Enviando...';
+    const parentId = document.getElementById('parentCategoryId').value;
+    if (parentId) formData.append('parentCategoryId', parentId);
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/categories`, {
             method: 'POST',
-            headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({
-                name,
-                description,
-                parentCategoryId
-            })
+            body: formData
         });
 
-        if (!response.ok) {
-            const message = await response.text();
-            throw new Error(message || 'Erro ao criar categoria');
-        }
+        if (!response.ok) throw new Error('Failed to create category');
 
-        statusDiv.textContent = 'Categoria criada com sucesso.';
+        alert('Category created!');
         document.getElementById('categoryForm').reset();
-        await loadCategories();
+        loadCategories();
     } catch (error) {
         console.error(error);
-        statusDiv.textContent = 'Falha ao criar categoria. Confira os dados e tente novamente.';
+        alert('Error creating category.');
     }
 }
 
 async function loadCategories() {
     const tableBody = document.getElementById('categoryList');
     if (!tableBody) return;
-    tableBody.innerHTML = '<tr><td colspan="4">Carregando...</td></tr>';
 
     try {
         const response = await fetch(`${API_BASE_URL}/api/categories`);
-        if (!response.ok) {
-            throw new Error('Falha ao carregar categorias');
-        }
         const categories = await response.json();
-        if (!categories.length) {
-            tableBody.innerHTML = '<tr><td colspan="4">Nenhuma categoria encontrada.</td></tr>';
-            return;
-        }
+
         tableBody.innerHTML = '';
         categories.forEach(cat => {
             const tr = document.createElement('tr');
             tr.innerHTML = `
-                <td>${cat.id ?? ''}</td>
-                <td>${cat.name ?? ''}</td>
-                <td>${cat.description ?? ''}</td>
-                <td>${cat.parentCategoryId ?? ''}</td>
+                <td>${cat.id}</td>
+                <td>${cat.name}</td>
+                <td>${cat.description}</td>
+                <td>${cat.parentCategoryId || '-'}</td>
+                <td>
+                    <button onclick="window.location.href='edit-category.html?id=${cat.id}'">Edit</button>
+                </td>
             `;
             tableBody.appendChild(tr);
         });
     } catch (error) {
         console.error(error);
-        tableBody.innerHTML = '<tr><td colspan="4">Erro ao carregar categorias.</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="5">Error loading categories</td></tr>';
     }
+}
+
+// Funções para a página de Edição (edit-category.html)
+async function loadCategoryForEdit() {
+    const params = new URLSearchParams(window.location.search);
+    const id = params.get('id');
+    if (!id) return;
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`);
+        if (!response.ok) throw new Error('Category not found');
+
+        const cat = await response.json();
+        document.getElementById('editCategoryId').value = cat.id;
+        document.getElementById('editName').value = cat.name;
+        document.getElementById('editDescription').value = cat.description;
+        document.getElementById('editParentId').value = cat.parentCategoryId || '';
+        // Assumindo que o back retorna 'enabled', se não, ajuste aqui
+        // document.getElementById('editEnabled').value = cat.enabled;
+    } catch (error) {
+        alert('Error loading category details');
+        window.location.href = 'categories.html';
+    }
+}
+
+// Adicionar Listener no formulário de edição se ele existir
+const editForm = document.getElementById('editCategoryForm');
+if (editForm) {
+    editForm.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        const id = document.getElementById('editCategoryId').value;
+        const formData = new FormData();
+
+        formData.append('name', document.getElementById('editName').value);
+        formData.append('description', document.getElementById('editDescription').value);
+
+        const parentId = document.getElementById('editParentId').value;
+        if (parentId) formData.append('parentCategoryId', parentId);
+
+        formData.append('enabled', document.getElementById('editEnabled').value);
+
+        const imageFile = document.getElementById('editImage').files[0];
+        if (imageFile) {
+            formData.append('imageFile', imageFile);
+        }
+
+        try {
+            const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+                method: 'PUT',
+                body: formData
+            });
+
+            if (response.ok) {
+                alert('Category updated successfully!');
+                window.location.href = 'categories.html';
+            } else {
+                alert('Failed to update category');
+            }
+        } catch (error) {
+            console.error(error);
+            alert('Error updating category');
+        }
+    });
+}
+
+// Listener para carregar categorias na página de lista
+if (document.getElementById('categoriesTable')) {
+    document.addEventListener('DOMContentLoaded', loadCategories);
+    const createForm = document.getElementById('categoryForm');
+    if(createForm) createForm.addEventListener('submit', createCategory);
 }
