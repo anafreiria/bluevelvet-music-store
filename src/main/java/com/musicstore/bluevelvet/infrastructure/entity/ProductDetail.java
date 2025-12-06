@@ -5,6 +5,8 @@ import lombok.*;
 
 import java.io.Serializable;
 
+import com.musicstore.bluevelvet.domain.Category;
+
 @Entity
 @Getter
 @Setter
@@ -25,5 +27,9 @@ public class ProductDetail implements Serializable {
     @ManyToOne
     @JoinColumn(name = "product_id", referencedColumnName = "id")
     private Product product;
+
+    @ManyToOne
+    @JoinColumn(name = "category_id")
+    private Category category;
 
 }

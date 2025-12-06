@@ -27,6 +27,10 @@
             <input type="text" id="categoryName" placeholder="Category Name" required>
             <input type="text" id="categoryDescription" placeholder="Description">
             <input type="number" id="parentCategoryId" placeholder="Parent Category ID (Optional)">
+            <label class="checkbox-inline">
+                <input type="checkbox" id="categoryEnabled" checked>
+                Category Enabled
+            </label>
             <label for="categoryImage">Category Image (optional)</label>
             <input type="file" id="categoryImage" accept="image/*">
             <button type="submit">Add Category</button>
@@ -36,13 +40,24 @@
 
     <section class="list-container">
         <h3>All Categories</h3>
-        <div class="filters">
-            <label for="categorySort">Sort by ID:</label>
-            <select id="categorySort">
-                <option value="asc" selected>Ascending</option>
-                <option value="desc">Descending</option>
-            </select>
+        <div id="breadcrumb" class="breadcrumb">
+            <span id="breadcrumbPath"><a href="#">Início</a></span>
         </div>
+        <div class="filters">
+            <label>
+                <input type="checkbox" id="showOnlyEnabled" checked>
+                Show only enabled
+            </label>
+            <label>
+                <input type="checkbox" id="showSubcategories" checked>
+                Show subcategories
+            </label>
+            <div class="filter-actions">
+                <button type="button" onclick="exportCategoryStatus()">Export Status</button>
+                <button type="button" onclick="importCategoryStatus()">Import Status</button>
+            </div>
+        </div>
+        <div id="statusSummary" class="status-info"></div>
         <table id="categoriesTable">
             <thead>
             <tr>
@@ -51,6 +66,7 @@
                 <th>Name</th>
                 <th>Description</th>
                 <th>Parent ID</th>
+                <th>Status</th>
                 <th>Actions</th> </tr>
             </thead>
             <tbody id="categoryList">

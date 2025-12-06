@@ -38,13 +38,16 @@ function logout() {
     window.location.href = 'index.html';
 }
 
+function buildBasicAuthHeader() {
+    const username = "rey";
+    const password = "rey-pass";
+    return "Basic " + btoa(username + ":" + password);
+}
+
 // Product management (backed by API)
 let products = [];
 const ITEMS_PER_PAGE = 5;
 let currentPage = 1;
-const CATEGORY_PAGE_SIZE = 5;
-let currentCategoryPage = 1;
-let currentCategorySort = 'asc';
 
 function mapApiProductToUi(apiProduct) {
     const placeholderMain = getUnsplashImage(200, 200, apiProduct.category || 'music');
@@ -244,23 +247,44 @@ function editProduct(id) {
     }
 }
 
-function deleteProduct(id) {
+async function deleteProduct(id) {
     if (!confirm('Are you sure you want to delete this product?')) {
         return;
     }
 
-    fetch(`${API_BASE_URL}/products/${id}`, { method: 'DELETE' })
-        .then(response => {
-            if (!response.ok) {
-                throw new Error('Failed to delete product');
+    try {
+        const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Authorization': buildBasicAuthHeader(),
+                'Content-Type': 'application/json'
             }
+        });
+
+        if (response.status === 204) {
+            alert('Product deleted successfully!');
+            await loadProductsFromApi();
+            return;
+        }
+
+        if (response.status === 403) {
+            alert('⛔ Error: You do not have permission to delete products (Admin/Editor only).');
+            return;
+        }
+
+        if (response.status === 404) {
+            alert('Error: Product not found.');
             products = products.filter(p => p.id !== id);
             displayProducts();
-        })
-        .catch(error => {
-            console.error(error);
-            alert('Error deleting product.');
-        });
+            return;
+        }
+
+        const text = await response.text();
+        throw new Error(text || 'Failed to delete product');
+    } catch (error) {
+        console.error(error);
+        alert('Error deleting product: ' + error.message);
+    }
 }
 
 async function loadProductDetails() {
@@ -511,7 +535,24 @@ document.addEventListener('DOMContentLoaded', () => {
         } else {
             document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
             document.getElementById('logoutBtn').addEventListener('click', logout);
+            initializeCategoryStatusSystem();
             document.getElementById('categoryForm').addEventListener('submit', createCategory);
+
+            const showOnlyEnabledCheckbox = document.getElementById('showOnlyEnabled');
+            const showSubcategoriesCheckbox = document.getElementById('showSubcategories');
+
+            if (showOnlyEnabledCheckbox) {
+                showOnlyEnabledCheckbox.addEventListener('change', displayCategories);
+            }
+            if (showSubcategoriesCheckbox) {
+                showSubcategoriesCheckbox.addEventListener('change', displayCategories);
+            }
+
+            if (!userIsAdmin()) {
+                const formSection = document.querySelector('.form-container');
+                if (formSection) formSection.style.display = 'none';
+            }
+
             loadCategories();
         }
     }
@@ -568,33 +609,110 @@ async function uploadProductImage(productId, inputId) {
     return resp.json();
 }
 
+const CATEGORIES_PER_PAGE = 10;
+let currentCategoryPage = 1;
+let allCategories = [];
+let filteredCategories = [];
+
+function getCategoryStatusFromStorage() {
+    return JSON.parse(localStorage.getItem('categoryStatus')) || {};
+}
+
+function userIsAdmin() {
+    return currentUser && currentUser.role && currentUser.role.toUpperCase() === 'ADMIN';
+}
+
+function saveCategoryStatusToStorage(statusMap) {
+    localStorage.setItem('categoryStatus', JSON.stringify(statusMap));
+}
+
+function toggleCategoryStatusInStorage(id) {
+    const statusMap = getCategoryStatusFromStorage();
+    const currentStatus = statusMap[id] !== false;
+    statusMap[id] = !currentStatus;
+    saveCategoryStatusToStorage(statusMap);
+    return statusMap[id];
+}
+
+function getCategoryStatus(id) {
+    const statusMap = getCategoryStatusFromStorage();
+    return statusMap[id] !== false;
+}
+
+function setCategoryStatus(id, enabled) {
+    const statusMap = getCategoryStatusFromStorage();
+    statusMap[id] = enabled;
+    saveCategoryStatusToStorage(statusMap);
+}
+
+function initializeCategoryStatusSystem() {
+    if (!localStorage.getItem('categoryStatus')) {
+        localStorage.setItem('categoryStatus', JSON.stringify({}));
+    }
+}
+
 async function createCategory(event) {
     event.preventDefault();
+    if (!userIsAdmin()) {
+        alert('Apenas admin pode criar categorias.');
+        return;
+    }
+    const name = document.getElementById('categoryName').value;
+    const description = document.getElementById('categoryDescription').value;
+    const parentCategoryIdRaw = document.getElementById('parentCategoryId').value;
+    const parentCategoryId = parentCategoryIdRaw ? parseInt(parentCategoryIdRaw) : null;
+    const enabled = document.getElementById('categoryEnabled')?.checked ?? true;
+    const statusDiv = document.getElementById('categoryStatus');
+
+    statusDiv.textContent = 'Enviando...';
+
     const formData = new FormData();
-    formData.append('name', document.getElementById('categoryName').value);
-    formData.append('description', document.getElementById('categoryDescription').value);
+    formData.append('name', name);
+    formData.append('description', description);
+    if (parentCategoryId) formData.append('parentCategoryId', parentCategoryId);
+    formData.append('enabled', enabled);
+
     const imageFile = document.getElementById('categoryImage')?.files?.[0];
     if (imageFile) {
         formData.append('imageFile', imageFile);
     }
 
-    const parentId = document.getElementById('parentCategoryId').value;
-    if (parentId) formData.append('parentCategoryId', parentId);
-
     try {
         const response = await fetch(`${API_BASE_URL}/api/categories`, {
             method: 'POST',
+            headers: { 'Authorization': buildBasicAuthHeader() },
             body: formData
         });
 
-        if (!response.ok) throw new Error('Failed to create category');
+        if (!response.ok) {
+            const message = await response.text();
+            throw new Error(message || 'Erro ao criar categoria');
+        }
 
-        alert('Category created!');
+        const createdCategory = await response.json();
+
+        setCategoryStatus(createdCategory.id, enabled);
+
+        const newCategory = {
+            ...createdCategory,
+            enabled: enabled
+        };
+        allCategories.push(newCategory);
+
+        statusDiv.textContent = 'Categoria criada com sucesso.';
+        statusDiv.style.color = 'green';
+
         document.getElementById('categoryForm').reset();
-        loadCategories();
+
+        currentCategoryPage = 1;
+        displayCategories();
+
+        setTimeout(() => { statusDiv.textContent = ''; }, 3000);
+
     } catch (error) {
         console.error(error);
-        alert('Error creating category.');
+        statusDiv.textContent = 'Falha ao criar: ' + error.message;
+        statusDiv.style.color = 'red';
     }
 }
 
@@ -602,38 +720,368 @@ async function loadCategories() {
     const tableBody = document.getElementById('categoryList');
     if (!tableBody) return;
 
+    tableBody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
+
     try {
-        const response = await fetch(`${API_BASE_URL}/api/categories?page=${currentCategoryPage - 1}&size=${CATEGORY_PAGE_SIZE}&sort=${currentCategorySort}`);
+        const response = await fetch(`${API_BASE_URL}/api/categories`);
+
+        if (!response.ok) {
+            throw new Error('Falha ao carregar categorias');
+        }
+
         const data = await response.json();
-
         const categories = Array.isArray(data) ? data : (data.content || []);
-        const totalPages = Array.isArray(data) ? 1 : (data.totalPages || 1);
 
-        tableBody.innerHTML = '';
-        categories.forEach(cat => {
-            const imageUrl = resolveCategoryImage(cat);
-            const tr = document.createElement('tr');
-            tr.innerHTML = `
-                <td>${cat.id}</td>
-                <td><img class="category-thumb" src="${imageUrl}" alt="${cat.name}" onerror="this.src='https://via.placeholder.com/80'"></td>
-                <td>${cat.name}</td>
-                <td>${cat.description}</td>
-                <td>${cat.parentCategoryId || '-'}</td>
-                <td>
-                    <button onclick="window.location.href='edit-category.html?id=${cat.id}'">Edit</button>
-                </td>
-            `;
-            tableBody.appendChild(tr);
-        });
+        const statusMap = getCategoryStatusFromStorage();
 
-        renderCategoryPagination(totalPages);
+        allCategories = categories.map(cat => ({
+            ...cat,
+            enabled: statusMap[cat.id] !== false ? (cat.enabled ?? true) : false
+        }));
+
+        currentCategoryPage = 1;
+        displayCategories();
+
     } catch (error) {
         console.error(error);
-        tableBody.innerHTML = '<tr><td colspan="5">Error loading categories</td></tr>';
+        tableBody.innerHTML = '<tr><td colspan="7" style="color:red">Erro ao carregar categorias.</td></tr>';
     }
 }
 
-// Funções para a página de Edição (edit-category.html)
+async function deleteCategory(id) {
+    if (!confirm(`Tem certeza que deseja excluir a categoria ID ${id}?`)) {
+        return;
+    }
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/api/categories/${id}`, {
+            method: 'DELETE',
+            headers: {
+                'Content-Type': 'application/json',
+                'Authorization': buildBasicAuthHeader()
+            }
+        });
+
+        if (response.status === 204) {
+            alert('Categoria excluída com sucesso!');
+            allCategories = allCategories.filter(cat => cat.id !== id);
+            loadCategories();
+        } else if (response.status === 409) {
+            alert('❌ ERRO: Não é possível excluir pois existem produtos nesta categoria.');
+        } else if (response.status === 403) {
+            alert('⛔ ERRO: Credenciais inválidas ou sem permissão.');
+        } else if (response.status === 404) {
+            alert('Erro: Categoria não encontrada no sistema.');
+            allCategories = allCategories.filter(cat => cat.id !== id);
+            loadCategories();
+        } else {
+            const text = await response.text();
+            alert('Ocorreu um erro: ' + text);
+        }
+
+    } catch (error) {
+        console.error("Erro na requisição:", error);
+        alert('Erro de conexão com o servidor.');
+    }
+}
+
+function userCanDelete() {
+    if (!currentUser || !currentUser.role) return false;
+    const role = currentUser.role.toUpperCase();
+    return role === 'ADMIN' || role === 'EDITOR';
+}
+
+function toggleCategoryStatus(id) {
+    const newStatus = toggleCategoryStatusInStorage(id);
+    const category = allCategories.find(cat => cat.id === id);
+    if (category) {
+        category.enabled = newStatus;
+    }
+    displayCategories();
+    alert(`Categoria ${newStatus ? 'habilitada' : 'desabilitada'} com sucesso!`);
+}
+
+function updateBreadcrumb() {
+    const breadcrumbDiv = document.getElementById('breadcrumb');
+    if (!breadcrumbDiv) return;
+    breadcrumbDiv.innerHTML = `<span id="breadcrumbPath"><a href="#">Início</a></span>`;
+}
+
+function filterCategories(categories) {
+    const showOnlyEnabled = document.getElementById('showOnlyEnabled')?.checked || false;
+    const showSubcategories = document.getElementById('showSubcategories')?.checked || false;
+
+    let filtered = [...categories];
+
+    if (showOnlyEnabled) {
+        filtered = filtered.filter(cat => cat.enabled !== false);
+    }
+
+    if (!showSubcategories) {
+        filtered = filtered.filter(cat => !cat.parentCategoryId);
+    }
+
+    return filtered;
+}
+
+function organizeCategoriesHierarchically(categories) {
+    const categoryMap = new Map();
+    const rootCategories = [];
+
+    categories.forEach(cat => {
+        categoryMap.set(cat.id, {
+            ...cat,
+            subcategories: []
+        });
+    });
+
+    categories.forEach(cat => {
+        const categoryObj = categoryMap.get(cat.id);
+
+        if (cat.parentCategoryId && categoryMap.has(cat.parentCategoryId)) {
+            const parent = categoryMap.get(cat.parentCategoryId);
+            parent.subcategories.push(categoryObj);
+        } else {
+            rootCategories.push(categoryObj);
+        }
+    });
+
+    rootCategories.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    rootCategories.forEach(cat => {
+        if (cat.subcategories.length > 0) {
+            cat.subcategories.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+        }
+    });
+
+    return rootCategories;
+}
+
+function flattenCategoriesForDisplay(hierarchicalCategories, onlyEnabled = true) {
+    const flattened = [];
+
+    function addCategory(cat, level = 0) {
+        if (onlyEnabled && cat.enabled === false) {
+            return;
+        }
+
+        flattened.push({
+            ...cat,
+            level: level
+        });
+
+        if (cat.subcategories && cat.subcategories.length > 0) {
+            cat.subcategories.forEach(subcat => addCategory(subcat, level + 1));
+        }
+    }
+
+    hierarchicalCategories.forEach(cat => addCategory(cat, 0));
+
+    return flattened;
+}
+
+function displayCategories() {
+    const tableBody = document.getElementById('categoryList');
+    if (!tableBody) return;
+
+    filteredCategories = filterCategories(allCategories);
+
+    const hierarchicalCategories = organizeCategoriesHierarchically(filteredCategories);
+    const displayCategoriesList = flattenCategoriesForDisplay(
+        hierarchicalCategories,
+        document.getElementById('showOnlyEnabled')?.checked || false
+    );
+
+    const totalPages = Math.ceil(displayCategoriesList.length / CATEGORIES_PER_PAGE);
+    const startIndex = (currentCategoryPage - 1) * CATEGORIES_PER_PAGE;
+    const endIndex = startIndex + CATEGORIES_PER_PAGE;
+    const paginatedCategories = displayCategoriesList.slice(startIndex, endIndex);
+
+    tableBody.innerHTML = '';
+
+    if (paginatedCategories.length === 0) {
+        tableBody.innerHTML = '<tr><td colspan="7">Nenhuma categoria encontrada.</td></tr>';
+        displayCategoryPagination(totalPages);
+        updateStatusSummary();
+        return;
+    }
+
+    const canDelete = userCanDelete();
+
+    paginatedCategories.forEach(cat => {
+        const tr = document.createElement('tr');
+
+        const parentCategory = allCategories.find(c => c.id === cat.parentCategoryId);
+        const parentName = parentCategory ? parentCategory.name : '-';
+        const imageUrl = resolveCategoryImage(cat);
+
+        let htmlContent = `
+            <td>${cat.id ?? ''}</td>
+            <td><img class="category-thumb" src="${imageUrl}" alt="${cat.name ?? ''}" onerror="this.src='https://via.placeholder.com/80'"></td>
+            <td style="padding-left: ${cat.level * 20}px">
+                ${cat.level > 0 ? '├─ ' : ''}${cat.name ?? ''}
+            </td>
+            <td>${cat.description ?? '-'}</td>
+            <td>${parentName}</td>
+            <td>
+                <span style="color: ${cat.enabled !== false ? 'green' : 'red'}; font-weight: bold;">
+                    ${cat.enabled !== false ? '✓ Habilitada' : '✗ Desabilitada'}
+                </span>
+            </td>
+            <td>
+        `;
+
+        htmlContent += `
+            <button onclick="window.location.href='edit-category.html?id=${cat.id}'">Editar</button>
+        `;
+
+        if (canDelete) {
+            htmlContent += `
+                <button onclick="deleteCategory(${cat.id})" 
+                        style="background-color: #dc3545; color: white; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin: 4px 2px;">
+                    Excluir
+                </button>
+                <button onclick="toggleCategoryStatus(${cat.id})"
+                        style="background-color: ${cat.enabled !== false ? '#ffc107' : '#28a745'}; color: ${cat.enabled !== false ? '#000' : 'white'}; border: none; padding: 5px 10px; border-radius: 4px; cursor: pointer; margin: 4px 2px;">
+                    ${cat.enabled !== false ? 'Desabilitar' : 'Habilitar'}
+                </button>
+            `;
+        } else {
+            htmlContent += `<span style="color: gray; font-size: 0.9em;">🔒 Restrito</span>`;
+        }
+
+        htmlContent += `</td>`;
+
+        tr.innerHTML = htmlContent;
+        tableBody.appendChild(tr);
+    });
+
+    displayCategoryPagination(totalPages);
+    updateStatusSummary();
+}
+
+function displayCategoryPagination(totalPages) {
+    const paginationContainer = document.getElementById('categoriesPagination') || document.getElementById('pagination');
+    if (!paginationContainer) return;
+
+    paginationContainer.innerHTML = '';
+
+    if (totalPages <= 1) return;
+
+    if (currentCategoryPage > 1) {
+        const prevButton = document.createElement('button');
+        prevButton.textContent = '← Anterior';
+        prevButton.onclick = () => {
+            currentCategoryPage--;
+            displayCategories();
+        };
+        paginationContainer.appendChild(prevButton);
+    }
+
+    const maxVisiblePages = 5;
+    let startPage = Math.max(1, currentCategoryPage - Math.floor(maxVisiblePages / 2));
+    let endPage = Math.min(totalPages, startPage + maxVisiblePages - 1);
+
+    if (endPage - startPage + 1 < maxVisiblePages) {
+        startPage = Math.max(1, endPage - maxVisiblePages + 1);
+    }
+
+    for (let i = startPage; i <= endPage; i++) {
+        const button = document.createElement('button');
+        button.textContent = i;
+        button.onclick = () => {
+            currentCategoryPage = i;
+            displayCategories();
+        };
+
+        if (i === currentCategoryPage) {
+            button.style.fontWeight = 'bold';
+            button.style.backgroundColor = '#007bff';
+            button.style.color = 'white';
+        }
+
+        paginationContainer.appendChild(button);
+    }
+
+    if (currentCategoryPage < totalPages) {
+        const nextButton = document.createElement('button');
+        nextButton.textContent = 'Próxima →';
+        nextButton.onclick = () => {
+            currentCategoryPage++;
+            displayCategories();
+        };
+        paginationContainer.appendChild(nextButton);
+    }
+
+    const infoSpan = document.createElement('span');
+    infoSpan.textContent = ` Página ${currentCategoryPage} de ${totalPages}`;
+    infoSpan.style.marginLeft = '10px';
+    infoSpan.style.alignSelf = 'center';
+    paginationContainer.appendChild(infoSpan);
+}
+
+function updateStatusSummary() {
+    const summaryDiv = document.getElementById('statusSummary');
+    if (!summaryDiv) return;
+
+    const totalCategories = allCategories.length;
+    const enabledCategories = allCategories.filter(cat => cat.enabled !== false).length;
+    const disabledCategories = totalCategories - enabledCategories;
+
+    summaryDiv.innerHTML = `
+        <strong>Resumo:</strong> 
+        Total: ${totalCategories} categorias | 
+        Habilitadas: <span style="color: green">${enabledCategories}</span> | 
+        Desabilitadas: <span style="color: red">${disabledCategories}</span>
+        | <button onclick="exportCategoryStatus()" style="background-color: #6c757d; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">
+            Exportar Status
+        </button>
+        <button onclick="importCategoryStatus()" style="background-color: #17a2b8; color: white; border: none; padding: 2px 8px; border-radius: 3px; cursor: pointer; font-size: 12px;">
+            Importar Status
+        </button>
+    `;
+}
+
+function exportCategoryStatus() {
+    const statusMap = JSON.parse(localStorage.getItem('categoryStatus')) || {};
+    const dataStr = JSON.stringify(statusMap, null, 2);
+    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+
+    const exportFileDefaultName = 'category-status-backup.json';
+
+    const linkElement = document.createElement('a');
+    linkElement.setAttribute('href', dataUri);
+    linkElement.setAttribute('download', exportFileDefaultName);
+    linkElement.click();
+
+    alert('Status das categorias exportado com sucesso!');
+}
+
+function importCategoryStatus() {
+    const input = document.createElement('input');
+    input.type = 'file';
+    input.accept = '.json';
+
+    input.onchange = function(event) {
+        const file = event.target.files[0];
+        const reader = new FileReader();
+
+        reader.onload = function(e) {
+            try {
+                const importedStatus = JSON.parse(e.target.result);
+                localStorage.setItem('categoryStatus', JSON.stringify(importedStatus));
+                alert('Status importado com sucesso! Recarregando categorias...');
+                loadCategories();
+            } catch (error) {
+                alert('Erro ao importar arquivo. Certifique-se de que é um JSON válido.');
+            }
+        };
+
+        reader.readAsText(file);
+    };
+
+    input.click();
+}
+
 async function loadCategoryForEdit() {
     const params = new URLSearchParams(window.location.search);
     const id = params.get('id');
@@ -648,8 +1096,7 @@ async function loadCategoryForEdit() {
         document.getElementById('editName').value = cat.name;
         document.getElementById('editDescription').value = cat.description;
         document.getElementById('editParentId').value = cat.parentCategoryId || '';
-        // Assumindo que o back retorna 'enabled', se não, ajuste aqui
-        // document.getElementById('editEnabled').value = cat.enabled;
+        document.getElementById('editEnabled').value = String(cat.enabled ?? true);
         const currentImage = document.getElementById('currentCategoryImage');
         if (currentImage) {
             const previewUrl = resolveCategoryImage(cat);
@@ -661,7 +1108,6 @@ async function loadCategoryForEdit() {
     }
 }
 
-// Adicionar Listener no formulário de edição se ele existir
 const editForm = document.getElementById('editCategoryForm');
 if (editForm) {
     editForm.addEventListener('submit', async (e) => {
@@ -675,9 +1121,10 @@ if (editForm) {
         const parentId = document.getElementById('editParentId').value;
         if (parentId) formData.append('parentCategoryId', parentId);
 
-        formData.append('enabled', document.getElementById('editEnabled').value);
+        const enabledValue = document.getElementById('editEnabled').value;
+        formData.append('enabled', enabledValue);
 
-        const imageFile = document.getElementById('editImage').files[0];
+        const imageFile = document.getElementById('editImage')?.files?.[0];
         if (imageFile) {
             formData.append('imageFile', imageFile);
         }
@@ -689,10 +1136,12 @@ if (editForm) {
             });
 
             if (response.ok) {
+                setCategoryStatus(id, enabledValue === 'true');
                 alert('Category updated successfully!');
                 window.location.href = 'categories.html';
             } else {
-                alert('Failed to update category');
+                const msg = await response.text();
+                alert(msg || 'Failed to update category');
             }
         } catch (error) {
             console.error(error);
@@ -701,35 +1150,6 @@ if (editForm) {
     });
 }
 
-// Listener para carregar categorias na página de lista
-if (document.getElementById('categoriesTable')) {
-    document.addEventListener('DOMContentLoaded', loadCategories);
-    const createForm = document.getElementById('categoryForm');
-    if(createForm) createForm.addEventListener('submit', createCategory);
-    const sortSelect = document.getElementById('categorySort');
-    if (sortSelect) {
-        sortSelect.addEventListener('change', () => {
-            currentCategorySort = sortSelect.value;
-            currentCategoryPage = 1;
-            loadCategories();
-        });
-    }
-}
-
-function renderCategoryPagination(totalPages) {
-    const container = document.getElementById('categoriesPagination');
-    if (!container) return;
-    container.innerHTML = '';
-    for (let i = 1; i <= totalPages; i++) {
-        const btn = document.createElement('button');
-        btn.textContent = i;
-        if (i === currentCategoryPage) {
-            btn.disabled = true;
-        }
-        btn.onclick = () => {
-            currentCategoryPage = i;
-            loadCategories();
-        };
-        container.appendChild(btn);
-    }
+if (document.getElementById('editCategoryForm')) {
+    document.addEventListener('DOMContentLoaded', loadCategoryForEdit);
 }

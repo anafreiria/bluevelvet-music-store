@@ -54,10 +54,10 @@ public class Product implements Serializable {
     @Column(name = "update_time")
     private LocalDateTime updateTime;
 
-    @OneToOne(mappedBy = "product")
+    @OneToOne(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private BoxDimension boxDimension;
 
-    @OneToMany(mappedBy = "product")
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductDetail> productDetails;
 
 }

@@ -9,4 +9,6 @@ import java.util.List;
 public interface ProductRepository extends JpaRepository<Product, Long> {
     // Método necessário para a atualização em massa quando a categoria mudar de nome
     List<Product> findByCategory(String category);
+
+    boolean existsByCategory(String category);
 }

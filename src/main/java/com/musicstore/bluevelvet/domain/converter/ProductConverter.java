@@ -8,6 +8,7 @@ import com.musicstore.bluevelvet.infrastructure.entity.BoxDimension;
 import com.musicstore.bluevelvet.infrastructure.entity.Product;
 import com.musicstore.bluevelvet.infrastructure.entity.ProductDetail;
 
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Objects;
@@ -15,21 +16,21 @@ import java.util.Objects;
 public class ProductConverter {
 
     public static Product convertToProduct(ProductRequest request){
-        return Product.builder()
-                .name(request.getName())
-                .shortDescription(request.getShortDescription())
-                .fullDescription(request.getFullDescription())
-                .brand(request.getBrand())
-                .category(request.getCategory())
-                .mainImage(request.getMainImage())
-                .cost(request.getCost())
-                .creationTime(request.getCreationTime())
-                .updateTime(request.getUpdateTime())
-                .enabled(request.getIsEnabled())
-                .inStock(request.getInStock())
-                .listPrice(request.getListPrice())
-                .discount(request.getDiscount())
-                .build();
+        Product product = new Product();
+        product.setName(request.getName());
+        product.setShortDescription(request.getShortDescription());
+        product.setFullDescription(request.getFullDescription());
+        product.setBrand(request.getBrand());
+        product.setCategory(request.getCategory());
+        product.setMainImage(request.getMainImage());
+        product.setCost(request.getCost());
+        product.setEnabled(request.getIsEnabled());
+        product.setInStock(request.getInStock());
+        product.setListPrice(request.getListPrice());
+        product.setDiscount(request.getDiscount());
+        product.setCreationTime(request.getCreationTime() != null ? request.getCreationTime() : LocalDateTime.now());
+        product.setUpdateTime(request.getUpdateTime() != null ? request.getUpdateTime() : LocalDateTime.now());
+        return product;
     }
 
     public static ProductResponse convertToProductResponse(Product product) {
@@ -72,6 +73,9 @@ public class ProductConverter {
     }
 
     private static ProductDimensionRequest convertBoxDimensionRequest(Product product) {
+        if (product.getBoxDimension() == null) {
+            return null;
+        }
         return ProductDimensionRequest.builder()
                 .height(product.getBoxDimension().getHeight())
                 .length(product.getBoxDimension().getLength())
@@ -81,6 +85,9 @@ public class ProductConverter {
     }
 
     public static BoxDimension convertBoxDimension(ProductRequest product) {
+        if (product.getDimension() == null) {
+            return BoxDimension.builder().build();
+        }
         return BoxDimension.builder()
                 .height(product.getDimension().getHeight())
                 .length(product.getDimension().getLength())

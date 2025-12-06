@@ -10,5 +10,6 @@ public class CategoryResponse {
     String name;
     String description;
     String image;
+    Boolean enabled;
     Long parentCategoryId;
 }

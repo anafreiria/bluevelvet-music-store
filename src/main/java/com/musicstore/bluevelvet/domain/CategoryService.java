@@ -4,25 +4,28 @@ import com.musicstore.bluevelvet.api.request.CategoryRequest;
 import com.musicstore.bluevelvet.api.response.CategoryResponse;
 import com.musicstore.bluevelvet.domain.exception.CategoryNotFoundException;
 import com.musicstore.bluevelvet.infrastructure.CategoryRepository;
-import com.musicstore.bluevelvet.infrastructure.repository.ProductRepository; // Importante
-import com.musicstore.bluevelvet.infrastructure.entity.Product; // Importante
+import com.musicstore.bluevelvet.infrastructure.repository.ProductRepository;
+import com.musicstore.bluevelvet.infrastructure.entity.Product;
+import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.*;
 import org.springframework.stereotype.Service;
 import org.springframework.web.multipart.MultipartFile;
+import org.springframework.http.HttpStatus;
+import org.springframework.web.server.ResponseStatusException;
 
 import java.io.IOException;
 import java.nio.file.*;
 import java.util.List;
 import java.util.stream.Collectors;
 
+@Log4j2
 @Service
 public class CategoryService {
 
     private final CategoryRepository repository;
-    private final ProductRepository productRepository; // Injeção nova
+    private final ProductRepository productRepository;
     private final Path rootLocation = Paths.get("user-images");
 
-    // Construtor atualizado recebendo o ProductRepository
     public CategoryService(CategoryRepository repository, ProductRepository productRepository) {
         this.repository = repository;
         this.productRepository = productRepository;
@@ -108,7 +111,7 @@ public class CategoryService {
         return mapToResponse(category);
     }
 
-    public List<CategoryResponse> listAll() {
+    public List<CategoryResponse> listAllResponses() {
         return repository.findAll().stream().map(this::mapToResponse).collect(Collectors.toList());
     }
 
@@ -128,6 +131,28 @@ public class CategoryService {
         return listPaginated(page, size, sort).map(this::mapToResponse);
     }
 
+    public void delete(Long id) {
+        Category category = repository.findById(id)
+                .orElseThrow(() -> new ResponseStatusException(HttpStatus.NOT_FOUND, "Category not found: " + id));
+
+        if (productRepository.existsByCategory(category.getName())) {
+            throw new ResponseStatusException(
+                    HttpStatus.CONFLICT,
+                    "Não é possível excluir: existem produtos vinculados a esta categoria."
+            );
+        }
+
+        if (category.getImage() != null) {
+            try {
+                Files.deleteIfExists(this.rootLocation.resolve(category.getImage()));
+            } catch (IOException e) {
+                log.warn("Failed to delete stored image {} for category {}", category.getImage(), category.getId(), e);
+            }
+        }
+
+        repository.deleteById(id);
+    }
+
     private CategoryResponse mapToResponse(Category category) {
         String imagePath = category.getImage() != null
                 ? "/user-images/" + category.getImage()
@@ -137,6 +162,7 @@ public class CategoryService {
                 .name(category.getName())
                 .description(category.getDescription())
                 .image(imagePath)
+                .enabled(category.isEnabled())
                 .parentCategoryId(category.getParentCategory() != null ? category.getParentCategory().getId() : null)
                 .build();
     }

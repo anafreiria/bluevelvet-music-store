@@ -28,6 +28,10 @@ public class Category {
 
     public Category() {}
 
+    public Category(String name, String description, Category parentCategory) {
+        this(name, description, parentCategory, null, true);
+    }
+
     public Category(String name, String description, Category parentCategory, String image, boolean enabled) {
         this.name = name;
         this.description = description;

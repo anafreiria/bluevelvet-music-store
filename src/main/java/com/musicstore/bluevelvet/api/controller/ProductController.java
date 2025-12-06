@@ -9,6 +9,7 @@ import lombok.extern.log4j.Log4j2;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 import org.springframework.http.ResponseEntity;
+import org.springframework.security.access.prepost.PreAuthorize;
 import org.springframework.web.bind.annotation.*;
 import org.springframework.web.multipart.MultipartFile;
 
@@ -38,6 +39,7 @@ public class ProductController {
 
     @DeleteMapping("/{id}")
     @Operation(summary = "Delete product by id", description = "Delete a product from the Blue Velvet Music Store")
+    @PreAuthorize("hasAnyRole('ADMIN','EDITOR')")
     public ResponseEntity<Void> deleteProductById(@PathVariable Long id) {
         log.info("Request received to delete a product by id {}", id);
 

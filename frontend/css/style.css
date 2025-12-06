@@ -74,10 +74,28 @@ th {
 }
 
 .filters {
-    margin-bottom: 10px;
+    margin: 10px 0;
     display: flex;
-    gap: 10px;
+    gap: 12px;
     align-items: center;
+    flex-wrap: wrap;
+}
+
+.filter-actions {
+    display: flex;
+    gap: 8px;
+}
+
+.filter-actions button {
+    padding: 8px 12px;
+    border-radius: 4px;
+}
+
+.breadcrumb {
+    margin: 10px 0;
+    padding: 8px;
+    background-color: #f4f4f4;
+    border-radius: 4px;
 }
 
 .category-thumb {
@@ -95,4 +113,17 @@ th {
     border-radius: 8px;
     border: 1px solid #ccc;
     margin-top: 8px;
+}
+
+.status-info {
+    margin: 8px 0;
+    padding: 10px;
+    background-color: #e9ecef;
+    border-radius: 4px;
+}
+
+.checkbox-inline {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
 }
