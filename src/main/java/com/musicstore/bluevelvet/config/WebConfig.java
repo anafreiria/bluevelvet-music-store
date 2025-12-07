@@ -1,19 +1,16 @@
-package com.musicstore.bluevelvet.config;
+package com.musicstore.bluevelvet.api.config; // Ajuste o pacote se necessário
 
 import org.springframework.context.annotation.Configuration;
 import org.springframework.web.servlet.config.annotation.ResourceHandlerRegistry;
 import org.springframework.web.servlet.config.annotation.WebMvcConfigurer;
-
-import java.nio.file.Path;
-import java.nio.file.Paths;
 
 @Configuration
 public class WebConfig implements WebMvcConfigurer {
 
     @Override
     public void addResourceHandlers(ResourceHandlerRegistry registry) {
-        Path uploadDir = Paths.get("user-images").toAbsolutePath();
+        // Mapeia a URL "/user-images/**" direto para a pasta física do seu computador
         registry.addResourceHandler("/user-images/**")
-                .addResourceLocations(uploadDir.toUri().toString());
+                .addResourceLocations("file:src/main/resources/static/user-images/");
     }
 }

@@ -577,14 +577,28 @@ function getUnsplashImage(width, height, category) {
 }
 
 // --- CATEGORY MANAGEMENT ---
-
 function normalizeImageUrl(url) {
-    if (!url) return null;
+    // ! Se a URL for nula, vazia ou inválida, retorna a imagem cinza.
+    if (!url || url.trim() === '' || url.trim() === 'null') {
+        // Data URL para um quadrado cinza (sem precisar de arquivo extra)
+        return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23cccccc"/></svg>';
+    }
+
+    // Se for imagem da internet, retorna igual
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const trimmed = url.startsWith('/') ? url : `/${url}`;
+
+    let finalUrl = url;
+
+    // Garante que a URL tem a extensão correta (mantendo o ajuste anterior)
+    if (!finalUrl.match(/\.(jpeg|jpg|gif|png)$/i)) { // Adicionado /i para case-insensitive
+        finalUrl += '.png';
+    }
+
+    // Adiciona a base da API para formar a URL completa (ex: /user-images/...)
+    const trimmed = finalUrl.startsWith('/') ? finalUrl : `/${finalUrl}`;
+
     return `${API_BASE_URL}${trimmed}`;
 }
-
 function resolveCategoryImage(cat) {
     const raw = cat.imageUrl || cat.image || cat.imagePath || cat.photo;
     return normalizeImageUrl(raw) || getUnsplashImage(80, 80, cat.name || 'music');
