@@ -20,7 +20,7 @@ public class Category {
     private String image;
 
     @Column(name = "enabled")
-    private boolean enabled = true;
+    private Boolean enabled = true;
 
     @ManyToOne
     @JoinColumn(name = "parent_id")
@@ -32,7 +32,7 @@ public class Category {
         this(name, description, parentCategory, null, true);
     }
 
-    public Category(String name, String description, Category parentCategory, String image, boolean enabled) {
+    public Category(String name, String description, Category parentCategory, String image, Boolean enabled) {
         this.name = name;
         this.description = description;
         this.parentCategory = parentCategory;
@@ -72,11 +72,12 @@ public class Category {
         this.image = image;
     }
 
-    public boolean isEnabled() {
+    // *** MÉTODO CORRIGIDO: DE isEnabled() para getEnabled() ***
+    public Boolean getEnabled() {
         return enabled;
     }
 
-    public void setEnabled(boolean enabled) {
+    public void setEnabled(Boolean enabled) {
         this.enabled = enabled;
     }
 

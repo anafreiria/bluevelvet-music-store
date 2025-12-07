@@ -632,6 +632,46 @@ function getCategoryStatusFromStorage() {
     return JSON.parse(localStorage.getItem('categoryStatus')) || {};
 }
 
+function getCategoryDataFromTable() {
+    // Tente encontrar a tabela. Você deve usar o ID ou uma classe específica, se houver.
+    // Usei 'table' como um seletor genérico.
+    const table = document.querySelector('table');
+
+    if (!table) {
+        console.error("Tabela de categorias não encontrada.");
+        return {};
+    }
+
+    // Seleciona todas as linhas de dados (tr) no corpo da tabela (tbody)
+    const rows = table.querySelectorAll('tbody tr');
+    let categoryStatuses = {};
+
+    // Mapeamento: 0=ID, 2=Name, 3=Description, 4=Parent ID, 5=Status
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+
+        if (cells.length >= 6) {
+            const id = cells[0].textContent.trim();
+            const name = cells[2].textContent.trim();
+            const description = cells[3].textContent.trim();
+            const parentId = cells[4].textContent.trim();
+            const statusText = cells[5].textContent.trim();
+
+            if (id) {
+                categoryStatuses[id] = {
+                    name: name,
+                    description: description,
+                    parentId: parentId,
+                    // Converte o texto de status para booleano (depende do texto na sua tabela)
+                    enabled: statusText.toLowerCase() === 'enabled' || statusText.toLowerCase() === 'sim',
+                };
+            }
+        }
+    });
+
+    return categoryStatuses;
+}
+
 function userIsAdmin() {
     return currentUser && currentUser.role && currentUser.role.toUpperCase() === 'ADMIN';
 }
@@ -1055,19 +1095,69 @@ function updateStatusSummary() {
     `;
 }
 
+// A função para obter os dados continua a mesma, pois você está lendo o JSON do storage.
+function getCategoryStatusFromStorage() {
+    return JSON.parse(localStorage.getItem('categoryStatus')) || {};
+}
+
+// FUNÇÃO DE CONVERSÃO DE DADOS (NOVA)
+
+function convertJSONToCSV(data) {
+    if (!data || Object.keys(data).length === 0) {
+        return ""; // Retorna vazio se não houver dados
+    }
+
+
+    const allStatuses = Object.values(data);
+    if (allStatuses.length === 0) {
+        return "";
+    }
+
+    const headerKeys = ['ID', ...Object.keys(allStatuses[0])];
+
+    const csvHeader = headerKeys.join(';');
+    const csvRows = Object.entries(data).map(([id, statusObject]) => {
+        // Mapeia os valores na ordem dos cabeçalhos, começando pelo ID
+        const values = headerKeys.map(key => {
+            if (key === 'ID') {
+                return id; // Retorna a chave (ID)
+            }
+
+            let value = statusObject[key];
+
+            if (typeof value === 'string' && value.includes(';')) {
+                value = `"${value.replace(/"/g, '""')}"`; // Envolve em aspas se contiver o separador
+            }
+            return value;
+        });
+        return values.join(';');
+    });
+
+    return [csvHeader, ...csvRows].join('\n');
+}
+
 function exportCategoryStatus() {
-    const statusMap = JSON.parse(localStorage.getItem('categoryStatus')) || {};
-    const dataStr = JSON.stringify(statusMap, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const categoryStatusJSON = getCategoryDataFromTable();
+    const csvString = convertJSONToCSV(categoryStatusJSON);
 
-    const exportFileDefaultName = 'category-status-backup.json';
+    if (csvString.length === 0) {
+        alert("Não há dados de status para exportar.");
+        return;
+    }
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
 
-    alert('Status das categorias exportado com sucesso!');
+    const link = document.createElement("a");
+
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", "category_status_export.csv"); // Nome do arquivo de saída
+
+    // 4. Dispara o clique e remove o link
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 function importCategoryStatus() {

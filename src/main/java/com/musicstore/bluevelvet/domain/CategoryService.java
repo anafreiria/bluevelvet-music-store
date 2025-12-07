@@ -161,8 +161,7 @@ public class CategoryService {
                 .id(category.getId())
                 .name(category.getName())
                 .description(category.getDescription())
-                .image(imagePath)
-                .enabled(category.isEnabled())
+                .image(imagePath).enabled(category.getEnabled())
                 .parentCategoryId(category.getParentCategory() != null ? category.getParentCategory().getId() : null)
                 .build();
     }
