@@ -633,8 +633,6 @@ function getCategoryStatusFromStorage() {
 }
 
 function getCategoryDataFromTable() {
-    // Tente encontrar a tabela. Você deve usar o ID ou uma classe específica, se houver.
-    // Usei 'table' como um seletor genérico.
     const table = document.querySelector('table');
 
     if (!table) {
@@ -642,7 +640,6 @@ function getCategoryDataFromTable() {
         return {};
     }
 
-    // Seleciona todas as linhas de dados (tr) no corpo da tabela (tbody)
     const rows = table.querySelectorAll('tbody tr');
     let categoryStatuses = {};
 
