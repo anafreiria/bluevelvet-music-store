@@ -2,10 +2,10 @@ package com.musicstore.bluevelvet.domain.service;
 
 import com.musicstore.bluevelvet.api.request.ProductRequest;
 import com.musicstore.bluevelvet.api.response.ProductResponse;
-import com.musicstore.bluevelvet.domain.Category;
+import com.musicstore.bluevelvet.infrastructure.entity.Category;
 import com.musicstore.bluevelvet.domain.converter.ProductConverter;
 import com.musicstore.bluevelvet.domain.exception.ProductNotFoundException;
-import com.musicstore.bluevelvet.infrastructure.CategoryRepository;
+import com.musicstore.bluevelvet.infrastructure.repository.CategoryRepository;
 import com.musicstore.bluevelvet.infrastructure.entity.BoxDimension;
 import com.musicstore.bluevelvet.infrastructure.entity.Product;
 import com.musicstore.bluevelvet.infrastructure.entity.ProductDetail;

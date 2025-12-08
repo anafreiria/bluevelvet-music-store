@@ -2,7 +2,7 @@ package com.musicstore.bluevelvet.api.controller;
 
 import com.musicstore.bluevelvet.api.request.CategoryRequest;
 import com.musicstore.bluevelvet.api.response.CategoryResponse;
-import com.musicstore.bluevelvet.domain.CategoryService;
+import com.musicstore.bluevelvet.domain.service.CategoryService;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.log4j.Log4j2;
 import org.springframework.http.HttpStatus;

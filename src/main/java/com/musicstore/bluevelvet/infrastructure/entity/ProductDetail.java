@@ -5,8 +5,6 @@ import lombok.*;
 
 import java.io.Serializable;
 
-import com.musicstore.bluevelvet.domain.Category;
-
 @Entity
 @Getter
 @Setter

@@ -1,47 +1,164 @@
 // API base for backend integration
 const API_BASE_URL = 'http://localhost:8081';
 
+const userJsonString = localStorage.getItem('user');
+
+// 2. Converte para objeto JavaScript.
+// Se a string for null, setamos currentUser para null.
+const currentUser = userJsonString ? JSON.parse(userJsonString) : null;
+
+// DEBUG: Confirma o valor imediatamente após a definição
+console.log("Variável currentUser carregada no Dashboard:", currentUser);
+
 // User authentication and registration (frontend-only stub)
 const users = JSON.parse(localStorage.getItem('users')) || [];
-let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+//let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
 
-function register() {
+async function register() {
+    // Se já existe um usuário logado, verifica se é admin
+    if (currentUser && currentUser.role !== 'ADMIN') {
+        alert("Apenas administradores podem criar novos usuários.");
+        return;
+    }
+
     const name = document.getElementById('name').value;
     const email = document.getElementById('email').value;
     const password = document.getElementById('password').value;
     const role = document.getElementById('role').value;
 
-    const user = { name, email, password, role };
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
-    alert('Registration successful. Please login.');
-    window.location.href = 'index.html';
+    const userData = { name, email, password, role };
+
+    try {
+        // Envia para o endpoint de criação do backend
+        // Se for a primeira conta do sistema, o backend deve permitir sem Auth
+        // Se for a segunda, o backend deve exigir Auth de Admin
+        const headers = { 'Content-Type': 'application/json' };
+        
+        // Se estiver logado, anexa a credencial para provar que é admin
+        const currentAuth = buildBasicAuthHeader();
+        if (currentAuth) {
+            headers['Authorization'] = currentAuth;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/auth/register`, { // ou /users
+            method: 'POST',
+            headers: headers,
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Falha no registro');
+        }
+
+        alert('Usuário registrado com sucesso.');
+        
+        // Se foi um admin criando outro user, limpa o form. Se foi cadastro inicial, vai pro login.
+        if (currentUser) {
+            document.getElementById('registerForm').reset();
+        } else {
+            window.location.href = 'dashboard.html';
+        }
+
+    } catch (error) {
+        alert('Erro: ' + error.message);
+    }
 }
 
-function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+function getAuthToken() {
+    return localStorage.getItem('authHeader') || '';
+}
 
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        window.location.href = 'dashboard.html';
-    } else {
-        alert('Invalid email or password');
+function getJsonHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    const token = getAuthToken();
+    if (token) {
+        headers['Authorization'] = token;
     }
+    return headers;
+}
+
+function getAuthHeaders() {
+    // Tenta recuperar o token salvo no login (vamos criar a lógica de login a seguir)
+    // O formato deve ser "Basic " + email:senha em Base64
+    const storedAuth = localStorage.getItem('auth_header');
+    
+    // NOTA: Se ainda não tens login feito, descomenta a linha abaixo para TESTAR com o teu admin:
+    // Substitui pelo teu email e senha reais do backend
+    // const storedAuth = 'Basic ' + btoa('teu_email@exemplo.com:tua_senha'); 
+
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': storedAuth || '' 
+    };
+}
+
+async function login(event) {
+    event.preventDefault(); // Impede o recarregamento da página
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const email = emailInput.value;
+    const password = passwordInput.value;
+
+    const loginData = { email: email, password: password };
+
+    try {
+        console.log("A tentar conectar ao servidor...");
+
+        const response = await fetch('http://localhost:8081/auth/login', {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginData)
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+
+            if (user.enabled === false) {
+                alert('Conta desativada.');
+                return;
+            }
+
+            // 🎯 AÇÃO CRÍTICA: Guardar no LocalStorage
+            // (Usou 'currentUser' como chave, vamos manter)
+            localStorage.setItem('currentUser', JSON.stringify(user));
+            
+            console.log("Login realizado com sucesso:", user);
+            alert('Bem-vindo!');
+            
+            // ✅ CORREÇÃO: Redirecionamento SÓ AQUI, no bloco de sucesso.
+            window.location.href = 'dashboard.html';
+
+        } else {
+            // Caso de erro do servidor (ex: 401 - Unauthorized)
+            console.warn("Erro no login:", response.status);
+            alert('Email ou senha inválidos (verificado pelo servidor).');
+            // NÃO HÁ REDIRECIONAMENTO AQUI. O utilizador fica no index.html.
+        }
+
+    } catch (error) {
+        // Caso de erro de rede (servidor offline)
+        console.error("Erro de conexão:", error);
+        alert('Não foi possível conectar ao servidor. Verifique se o Backend está a correr.');
+        // NÃO HÁ REDIRECIONAMENTO AQUI. O utilizador fica no index.html.
+    }
+    // 🛑 REMOVER ESTA LINHA: (window.location.href = 'dashboard.html';)
+    // Pois estava a forçar o redirecionamento, mesmo com falha.
 }
 
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
+    localStorage.removeItem('authHeader'); // <--- Linha nova importante
     window.location.href = 'index.html';
 }
 
 function buildBasicAuthHeader() {
-    const username = "rey";
-    const password = "rey-pass";
-    return "Basic " + btoa(username + ":" + password);
+    // Recupera o header salvo no localStorage durante o login
+    return localStorage.getItem('authHeader') || '';
 }
 
 // Product management (backed by API)
@@ -159,23 +276,50 @@ async function addProduct(event) {
     }
 }
 
-async function loadProductsFromApi() {
+async function loadCategories() {
+    const tableBody = document.getElementById('categoryList');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
+
     try {
-        const response = await fetch(`${API_BASE_URL}/products?size=200`);
-        if (!response.ok) {
-            throw new Error('Failed to load products');
+        // ADICIONADO: O segundo parâmetro com headers
+        const response = await fetch(`${API_BASE_URL}/api/categories`, {
+            method: 'GET',
+            headers: getJsonHeaders() // Usa o helper padronizado
+        });
+
+        if (response.status === 401 || response.status === 403) {
+             throw new Error('Não autorizado! Verifica o login.');
         }
-        const page = await response.json();
-        products = (page.content || []).map(mapApiProductToUi);
-        displayProducts();
+
+        if (!response.ok) {
+            throw new Error('Falha ao carregar categorias');
+        }
+
+        const data = await response.json();
+        const categories = Array.isArray(data) ? data : (data.content || []);
+
+        const statusMap = getCategoryStatusFromStorage();
+
+        allCategories = categories.map(cat => ({
+            ...cat,
+            enabled: statusMap[cat.id] !== false ? (cat.enabled ?? true) : false
+        }));
+
+        currentCategoryPage = 1;
+        displayCategories();
+
     } catch (error) {
         console.error(error);
-        alert('Erro ao carregar produtos da API.');
+        tableBody.innerHTML = '<tr><td colspan="7" style="color:red">Erro ao carregar categorias (401/403).</td></tr>';
     }
 }
 
 async function fetchProductById(id) {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`);
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+        headers: getJsonHeaders() // <--- Necessário se o GET for protegido
+    });
     if (!response.ok) {
         throw new Error('Product not found');
     }
@@ -473,88 +617,151 @@ function displayFilteredProducts(filteredProducts) {
     });
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    initializeProducts();
+    // 1. Definições Iniciais
     const path = window.location.pathname;
 
-    if (path.includes('index.html')) {
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            login();
-        });
-    } else if (path.includes('register.html')) {
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            register();
-        });
-    } else if (path.includes('dashboard.html')) {
-        if (!currentUser) {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('categoriesBtn').addEventListener('click', () => {
-                window.location.href = 'categories.html';
-            });
-            document.getElementById('addProductBtn').addEventListener('click', () => {
-                if (['admin', 'editor'].includes(currentUser.role)) {
-                    window.location.href = 'add-product.html';
-                } else {
-                    alert('You do not have permission to add products.');
-                }
-            });
-            document.getElementById('sortSelect').addEventListener('change', sortProducts);
-            document.getElementById('searchInput').addEventListener('input', searchProducts);
-            displayProducts();
-        }
-    } else if (path.includes('add-product.html')) {
-        if (!currentUser || !['admin', 'editor'].includes(currentUser.role)) {
+    // 2. Recuperar o utilizador (Crucial fazer isto antes das rotas)
+    const storedUser = localStorage.getItem('user'); 
+    const currentUser = storedUser ? JSON.parse(storedUser) : null;
+
+    // =========================================================
+    // ROTA: LOGIN (index.html ou raiz)
+    // =========================================================
+    if (path.includes('index.html') || path === '/' || path.endsWith('/')) {
+        // Se já estiver logado, manda para o dashboard
+        if (currentUser) {
             window.location.href = 'dashboard.html';
-        } else {
-            document.getElementById('addProductForm').addEventListener('submit', addProduct);
-            document.getElementById('addDetailBtn').addEventListener('click', addDetailField);
+            return; 
         }
-    } else if (path.includes('edit-product.html')) {
+
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            // Este listener é agora registado imediatamente
+            loginForm.addEventListener('submit', login);
+        }
+    } 
+
+    // =========================================================
+    // ROTA: REGISTRO
+    // =========================================================
+    else if (path.includes('register.html')) {
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.addEventListener('submit', register);
+        }
+    } 
+
+    // =========================================================
+    // ROTA: DASHBOARD
+    // =========================================================
+    else if (path.includes('dashboard.html')) {
+   // if (!currentUser) {
+        // ✅ CORRIGIDO: Se não há utilizador, volta para o login.
+        window.location.href = 'index.html'; 
+    
+        // ... (resto do teu código de botões e eventos) ...
+        
+        // --- 🎯 ONDE DEVE ESTAR A CHAMADA DA API ---
+        
+        // Chamamos a função de inicialização da API apenas uma vez
+        // Ela deve estar definida no final do teu ficheiro script.js
+        initializeProducts(); // <-- Vais verificar esta função agora
+        
+        // O displayProducts() aqui apenas usa o array local (products) 
+        // preenchido pela API, ele não deve fazer a chamada da API
+        displayProducts(); 
+    
+}
+
+    // =========================================================
+    // ROTA: ADICIONAR PRODUTO
+    // =========================================================
+    else if (path.includes('add-product.html')) {
+        if (!currentUser || !['admin', 'editor'].includes(currentUser.role)) {
+            window.location.href = 'add-product.html';
+        } else {
+            const addProductForm = document.getElementById('addProductForm');
+            if (addProductForm) addProductForm.addEventListener('submit', addProduct);
+
+            const addDetailBtn = document.getElementById('addDetailBtn');
+            if (addDetailBtn) addDetailBtn.addEventListener('click', addDetailField);
+        }
+    } 
+
+    // =========================================================
+    // ROTA: EDITAR PRODUTO
+    // =========================================================
+    else if (path.includes('edit-product.html')) {
         if (!currentUser || !['admin', 'editor', 'salesperson'].includes(currentUser.role)) {
             window.location.href = 'dashboard.html';
         } else {
-            loadEditForm();
-            document.getElementById('editProductForm').addEventListener('submit', updateProduct);
-            document.getElementById('addDetailBtn').addEventListener('click', addDetailField);
+            loadEditForm(); // Carrega os dados nos inputs
+            
+            const editProductForm = document.getElementById('editProductForm');
+            if (editProductForm) editProductForm.addEventListener('submit', updateProduct);
+
+            const addDetailBtn = document.getElementById('addDetailBtn');
+            if (addDetailBtn) addDetailBtn.addEventListener('click', addDetailField);
         }
-    } else if (path.includes('view-product.html')) {
+    } 
+
+    // =========================================================
+    // ROTA: VER PRODUTO
+    // =========================================================
+    else if (path.includes('view-product.html')) {
         if (!currentUser) {
-            window.location.href = 'index.html';
+            window.location.href = 'dashboard.html';
         } else {
             loadProductDetails();
         }
-    } else if (path.includes('categories.html')) {
+    } 
+
+    // =========================================================
+    // ROTA: CATEGORIAS
+    // =========================================================
+    else if (path.includes('categories.html')) {
         if (!currentUser) {
-            window.location.href = 'index.html';
+            window.location.href = 'dashboard.html';
         } else {
-            document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
+            const userInfoElement = document.getElementById('userInfo');
+            if (userInfoElement) {
+                userInfoElement.textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
+            }
+            
+            const logoutBtn = document.getElementById('logoutBtn');
+            if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
             initializeCategoryStatusSystem();
-            document.getElementById('categoryForm').addEventListener('submit', createCategory);
+            
+            const categoryForm = document.getElementById('categoryForm');
+            if (categoryForm) categoryForm.addEventListener('submit', createCategory);
 
             const showOnlyEnabledCheckbox = document.getElementById('showOnlyEnabled');
             const showSubcategoriesCheckbox = document.getElementById('showSubcategories');
 
-            if (showOnlyEnabledCheckbox) {
-                showOnlyEnabledCheckbox.addEventListener('change', displayCategories);
-            }
-            if (showSubcategoriesCheckbox) {
-                showSubcategoriesCheckbox.addEventListener('change', displayCategories);
-            }
+            if (showOnlyEnabledCheckbox) showOnlyEnabledCheckbox.addEventListener('change', displayCategories);
+            if (showSubcategoriesCheckbox) showSubcategoriesCheckbox.addEventListener('change', displayCategories);
 
-            if (!userIsAdmin()) {
+            // Esconder form se não for Admin
+            if (currentUser.role !== 'admin') {
                 const formSection = document.querySelector('.form-container');
                 if (formSection) formSection.style.display = 'none';
             }
 
             loadCategories();
         }
+    }
+
+    // =========================================================
+    // 3. INICIALIZAÇÃO DE DADOS (NO FINAL)
+    // =========================================================
+    // Movemos isto para o fim e adicionamos tratamento de erros.
+    // Se a API falhar, não impede o funcionamento dos botões acima.
+    try {
+        initializeProducts();
+    } catch (error) {
+        console.error("Aviso: Falha ao inicializar produtos. Verifique a API.", error);
     }
 });
 
@@ -1253,4 +1460,31 @@ if (editForm) {
 
 if (document.getElementById('editCategoryForm')) {
     document.addEventListener('DOMContentLoaded', loadCategoryForEdit);
+}
+
+async function loadProductsFromApi() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/products?size=200`, {
+            method: 'GET',
+            // ALTERAÇÃO: Não usar getJsonHeaders() aqui para evitar enviar token inválido
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.status === 401) {
+            alert("Sessão expirada");
+            logout();
+            return;
+        }
+
+        if (!response.ok) throw new Error('Failed to load products');
+        
+        const page = await response.json();
+        products = (page.content || []).map(mapApiProductToUi);
+        displayProducts();
+    } catch (error) {
+        console.error(error);
+        alert('Erro ao carregar produtos da API.');
+    }
 }
