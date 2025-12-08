@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+<head>
+  <meta charset="utf-8"/>
+  <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+  <title>Editar Categoria - BlueVelvet</title>
+  <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+  <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+  <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+  <script>
+    tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#3e70e5", "background-dark": "#111621", "card-dark": "#1c1f26", "border-dark": "#292e38", "text-muted": "#9ea6b7" }, fontFamily: { "display": ["Spline Sans", "sans-serif"] } } } }
+  </script>
+</head>
+<body class="bg-background-dark text-white font-display overflow-y-auto">
+<div class="max-w-[1000px] mx-auto p-6 md:p-10">
+  <div class="flex justify-between items-center mb-8 border-b border-border-dark pb-6">
+    <div>
+      <nav class="text-sm text-text-muted mb-2"><a href="categories.html" class="hover:text-white transition-colors">Categorias</a> / Editar</nav>
+      <h1 class="text-3xl font-bold">Editar Categoria</h1>
+    </div>
+    <a href="categories.html" class="px-4 py-2 rounded-lg border border-border-dark hover:bg-border-dark transition-colors text-sm font-medium">Voltar</a>
+  </div>
+
+  <form id="editCategoryForm" class="bg-card-dark rounded-xl border border-border-dark overflow-hidden shadow-xl">
+    <input type="hidden" id="editCategoryId">
+
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:divide-x divide-border-dark">
+      <div class="p-8 flex flex-col gap-6">
+        <h2 class="text-lg font-bold flex items-center gap-2 text-white"><span class="material-symbols-outlined text-primary">edit_note</span> Informações Básicas</h2>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-text-muted">Nome</label>
+          <input id="editName" type="text" class="w-full bg-[#111317] border border-border-dark rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none" required>
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-text-muted">ID Categoria Pai</label>
+          <input id="editParentId" type="number" class="w-full bg-[#111317] border border-border-dark rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none">
+        </div>
+
+        <div class="flex flex-col gap-2">
+          <label class="text-sm font-medium text-text-muted">Descrição</label>
+          <textarea id="editDescription" rows="4" class="w-full bg-[#111317] border border-border-dark rounded-lg px-4 py-3 text-white focus:border-primary focus:ring-1 focus:ring-primary outline-none resize-none"></textarea>
+        </div>
+
+        <div class="flex items-center justify-between p-4 rounded-lg bg-[#111317] border border-border-dark">
+          <div class="flex flex-col">
+            <span class="text-white text-sm font-medium">Status</span>
+            <span class="text-text-muted text-xs">Ativo ou Inativo</span>
+          </div>
+          <select id="editEnabled" class="bg-card-dark border border-border-dark text-white text-sm rounded-lg focus:ring-primary focus:border-primary block p-2.5">
+            <option value="true">Ativo</option>
+            <option value="false">Inativo</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="p-8 bg-[#16181d] flex flex-col gap-6">
+        <h2 class="text-lg font-bold flex items-center gap-2 text-white"><span class="material-symbols-outlined text-primary">image</span> Mídia</h2>
+
+        <div class="flex flex-col gap-4">
+          <label class="text-sm font-medium text-text-muted">Imagem Atual</label>
+          <div id="imagePreviewContainer" class="w-full aspect-video bg-[#111317] border-2 border-dashed border-border-dark rounded-lg flex items-center justify-center overflow-hidden relative group">
+            <img id="currentImagePreview" src="" alt="Sem imagem" class="w-full h-full object-cover hidden">
+            <span id="noImageText" class="text-text-muted text-xs">Nenhuma imagem carregada</span>
+          </div>
+
+          <input type="file" id="editImage" class="block w-full text-sm text-text-muted file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+        </div>
+      </div>
+    </div>
+
+    <div class="p-6 border-t border-border-dark bg-[#16181d] flex justify-end gap-3">
+      <button type="button" onclick="window.location.href='categories.html'" class="px-6 py-2.5 rounded-lg border border-border-dark text-text-muted hover:text-white hover:bg-border-dark transition-colors">Cancelar</button>
+      <button type="submit" class="bg-primary hover:bg-blue-600 text-white px-8 py-2.5 rounded-lg shadow-lg shadow-primary/20 font-medium flex items-center gap-2">
+        <span class="material-symbols-outlined text-xl">save</span> Salvar Alterações
+      </button>
+    </div>
+  </form>
+</div>
+<script src="script.js"></script>
+<script>document.addEventListener('DOMContentLoaded', loadCategoryForEdit);</script>
+</body>
+</html>

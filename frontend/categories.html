@@ -1,0 +1,84 @@
+<!DOCTYPE html>
+<html class="dark" lang="pt-BR">
+<head>
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Categorias - BlueVelvet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Spline+Sans:wght@300;400;500;600;700&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { "primary": "#3e70e5", "background-dark": "#111621", "surface-dark": "#1a202e", "border-dark": "#2a3140" }, fontFamily: { display: ["Spline Sans", "sans-serif"] } } }
+        }
+    </script>
+</head>
+<body class="bg-background-dark text-white font-display h-screen flex overflow-hidden">
+
+<aside class="w-64 bg-[#0d1117] border-r border-border-dark flex flex-col p-4">
+    <div class="flex items-center gap-3 mb-8 px-2">
+        <span class="material-symbols-outlined text-primary text-3xl">album</span>
+        <span class="font-bold text-lg">BlueVelvet</span>
+    </div>
+    <nav class="flex flex-col gap-2">
+        <a href="dashboard.html" class="flex items-center gap-3 px-4 py-3 rounded-lg text-slate-400 hover:bg-surface-dark hover:text-white transition-colors">
+            <span class="material-symbols-outlined">dashboard</span> Dashboard
+        </a>
+        <a href="#" class="flex items-center gap-3 px-4 py-3 rounded-lg bg-primary/10 text-primary border border-primary/20">
+            <span class="material-symbols-outlined fill-1">category</span> Categorias
+        </a>
+    </nav>
+    <div class="mt-auto">
+        <button id="logoutBtn" class="flex items-center gap-3 px-4 py-3 text-red-400 hover:text-red-300 w-full">
+            <span class="material-symbols-outlined">logout</span> Sair
+        </button>
+    </div>
+</aside>
+
+<main class="flex-1 flex flex-col h-full min-w-0 overflow-hidden bg-background-dark">
+    <header class="h-16 flex items-center justify-between px-8 border-b border-border-dark bg-surface-dark/50 backdrop-blur-md">
+        <h2 class="text-xl font-bold">Gerenciar Categorias</h2>
+        <button onclick="document.getElementById('createCategorySection').classList.toggle('hidden')" class="bg-primary hover:bg-blue-600 text-white px-4 py-2 rounded-lg flex items-center gap-2 font-medium text-sm transition-colors">
+            <span class="material-symbols-outlined text-lg">add</span> Nova Categoria
+        </button>
+    </header>
+
+    <div class="flex-1 overflow-y-auto p-8">
+        <div class="max-w-[1200px] mx-auto flex flex-col gap-6">
+
+            <section id="createCategorySection" class="hidden bg-surface-dark border border-border-dark rounded-xl p-6 shadow-lg mb-6">
+                <h3 class="text-lg font-bold mb-4">Nova Categoria Rápida</h3>
+                <form id="categoryForm" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <input id="categoryName" type="text" placeholder="Nome da Categoria" class="bg-background-dark border border-border-dark rounded-lg px-4 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary" required>
+                        <input id="categoryDescription" type="text" placeholder="Descrição" class="bg-background-dark border border-border-dark rounded-lg px-4 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary">
+                    </div>
+                    <input id="parentCategoryId" type="number" placeholder="ID Categoria Pai (Opcional)" class="bg-background-dark border border-border-dark rounded-lg px-4 py-2 text-white focus:border-primary focus:ring-1 focus:ring-primary w-full md:w-1/2">
+                    <div class="flex justify-end gap-3">
+                        <button type="button" onclick="document.getElementById('createCategorySection').classList.add('hidden')" class="px-4 py-2 text-slate-400 hover:text-white">Cancelar</button>
+                        <button type="submit" class="bg-primary hover:bg-blue-600 text-white px-6 py-2 rounded-lg font-bold">Salvar</button>
+                    </div>
+                    <div id="categoryStatus" class="text-sm mt-2"></div>
+                </form>
+            </section>
+
+            <div class="bg-surface-dark border border-border-dark rounded-xl overflow-hidden shadow-sm">
+                <div class="grid grid-cols-12 gap-4 px-6 py-4 border-b border-border-dark bg-[#1f2636] text-xs font-semibold text-slate-400 uppercase tracking-wider">
+                    <div class="col-span-1 text-center">ID</div>
+                    <div class="col-span-4">Nome</div>
+                    <div class="col-span-4">Descrição</div>
+                    <div class="col-span-2 text-center">ID Pai</div>
+                    <div class="col-span-1 text-right">Ações</div>
+                </div>
+
+                <div id="categoryList" class="flex flex-col divide-y divide-border-dark">
+                    <div class="p-8 text-center text-slate-500">Carregando categorias...</div>
+                </div>
+            </div>
+        </div>
+    </div>
+</main>
+<script src="script.js"></script>
+</body>
+</html>
