@@ -1,47 +1,202 @@
 // API base for backend integration
 const API_BASE_URL = 'http://localhost:8081';
 
-// User authentication and registration (frontend-only stub)
-const users = JSON.parse(localStorage.getItem('users')) || [];
-let currentUser = JSON.parse(localStorage.getItem('currentUser')) || null;
+const storedUserString = localStorage.getItem('currentUser');
+let currentUser = storedUserString ? JSON.parse(storedUserString) : null;
 
-function register() {
-    const name = document.getElementById('name').value;
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
-    const role = document.getElementById('role').value;
-
-    const user = { name, email, password, role };
-    users.push(user);
-    localStorage.setItem('users', JSON.stringify(users));
-    alert('Registration successful. Please login.');
-    window.location.href = 'index.html';
+function normalizeRole(role) {
+    return (role || '').replace(/^ROLE_/i, '').toUpperCase();
 }
 
-function login() {
-    const email = document.getElementById('email').value;
-    const password = document.getElementById('password').value;
+if (currentUser && currentUser.role) {
+    currentUser.role = normalizeRole(currentUser.role);
+}
 
-    const user = users.find(u => u.email === email && u.password === password);
-    if (user) {
-        currentUser = user;
-        localStorage.setItem('currentUser', JSON.stringify(user));
-        window.location.href = 'dashboard.html';
+function isAdminUser(user) {
+    return normalizeRole(user?.role) === 'ADMIN';
+}
+
+function showMessage(elementId, text, isError = true) {
+    const el = document.getElementById(elementId);
+    if (!el) return;
+    el.textContent = text || '';
+    el.style.display = text ? 'block' : 'none';
+    el.className = isError ? 'message error' : 'message success';
+}
+
+function storeAuthHeader(email, password, remember) {
+    const header = "Basic " + btoa(`${email}:${password}`);
+    sessionStorage.setItem('authHeader', header);
+    if (remember) {
+        localStorage.setItem('authHeader', header);
     } else {
-        alert('Invalid email or password');
+        localStorage.removeItem('authHeader');
+    }
+    return header;
+}
+
+function clearStoredAuth() {
+    sessionStorage.removeItem('authHeader');
+    localStorage.removeItem('authHeader');
+}
+
+function getStoredAuthHeader() {
+    return sessionStorage.getItem('authHeader') || localStorage.getItem('authHeader') || '';
+}
+
+async function register(event) {
+    if (event) event.preventDefault();
+
+    if (!isAdminUser(currentUser)) {
+        showMessage('registerMessage', 'Apenas administradores podem criar novos usuários.');
+        return;
+    }
+
+    const name = document.getElementById('name')?.value?.trim();
+    const email = document.getElementById('email')?.value?.trim();
+    const password = document.getElementById('password')?.value || '';
+    const role = document.getElementById('role')?.value || '';
+
+    if (!email || !password) {
+        showMessage('registerMessage', 'E-mail e senha são obrigatórios.');
+        return;
+    }
+
+    if (password.length < 8) {
+        showMessage('registerMessage', 'A senha deve ter pelo menos 8 caracteres.');
+        return;
+    }
+
+    if (!role) {
+        showMessage('registerMessage', 'Selecione uma função.');
+        return;
+    }
+
+    const userData = { name, email, password, role };
+
+    try {
+        const headers = { 'Content-Type': 'application/json' };
+
+        const currentAuth = getStoredAuthHeader();
+        if (currentAuth) {
+            headers['Authorization'] = currentAuth;
+        }
+
+        const response = await fetch(`${API_BASE_URL}/auth/register`, {
+            method: 'POST',
+            headers,
+            body: JSON.stringify(userData)
+        });
+
+        if (!response.ok) {
+            const errorText = await response.text();
+            throw new Error(errorText || 'Falha no registro');
+        }
+
+        showMessage('registerMessage', 'Usuário registrado com sucesso.', false);
+        document.getElementById('registerForm')?.reset();
+
+    } catch (error) {
+        showMessage('registerMessage', 'Erro: ' + error.message);
+    }
+}
+
+function getAuthToken() {
+    return getStoredAuthHeader();
+}
+
+function getJsonHeaders() {
+    const headers = {
+        'Content-Type': 'application/json'
+    };
+    const token = getAuthToken();
+    if (token) {
+        headers['Authorization'] = token;
+    }
+    return headers;
+}
+
+function getAuthHeaders() {
+    // Tenta recuperar o token salvo no login (vamos criar a lógica de login a seguir)
+    // O formato deve ser "Basic " + email:senha em Base64
+    const storedAuth = getStoredAuthHeader();
+    
+    // NOTA: Se ainda não tens login feito, descomenta a linha abaixo para TESTAR com o teu admin:
+    // Substitui pelo teu email e senha reais do backend
+    // const storedAuth = 'Basic ' + btoa('teu_email@exemplo.com:tua_senha'); 
+
+    return {
+        'Content-Type': 'application/json',
+        'Authorization': storedAuth || '' 
+    };
+}
+
+async function login(event) {
+    if (event) event.preventDefault(); // Impede o recarregamento da página
+    showMessage('loginMessage', '');
+
+    const emailInput = document.getElementById('email');
+    const passwordInput = document.getElementById('password');
+    const rememberMe = document.getElementById('rememberMe')?.checked;
+    const email = emailInput?.value?.trim();
+    const password = passwordInput?.value || '';
+
+    if (!email || !password) {
+        showMessage('loginMessage', 'E-mail e senha são obrigatórios.');
+        return;
+    }
+
+    if (password.length < 8) {
+        showMessage('loginMessage', 'A senha deve ter pelo menos 8 caracteres.');
+        return;
+    }
+
+    const loginData = { email: email, password: password };
+
+    try {
+        const response = await fetch(`${API_BASE_URL}/auth/login`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify(loginData)
+        });
+
+        if (response.ok) {
+            const user = await response.json();
+
+            if (user.enabled === false) {
+                showMessage('loginMessage', 'Conta desativada. Fale com um administrador.');
+                return;
+            }
+
+            const normalizedRole = normalizeRole(user.role);
+            const storedUser = { ...user, role: normalizedRole };
+
+            currentUser = storedUser;
+            localStorage.setItem('currentUser', JSON.stringify(storedUser));
+            storeAuthHeader(email, password, rememberMe);
+
+            showMessage('loginMessage', 'Login realizado com sucesso.', false);
+            window.location.href = 'dashboard.html';
+
+        } else {
+            const errorText = await response.text();
+            showMessage('loginMessage', errorText || 'E-mail ou senha incorretos. Tente novamente.');
+        }
+
+    } catch (error) {
+        showMessage('loginMessage', 'Não foi possível conectar ao servidor. Verifique se o backend está no ar.');
     }
 }
 
 function logout() {
     currentUser = null;
     localStorage.removeItem('currentUser');
+    clearStoredAuth();
     window.location.href = 'index.html';
 }
 
 function buildBasicAuthHeader() {
-    const username = "rey";
-    const password = "rey-pass";
-    return "Basic " + btoa(username + ":" + password);
+    return getStoredAuthHeader();
 }
 
 // Product management (backed by API)
@@ -159,23 +314,50 @@ async function addProduct(event) {
     }
 }
 
-async function loadProductsFromApi() {
+async function loadCategories() {
+    const tableBody = document.getElementById('categoryList');
+    if (!tableBody) return;
+
+    tableBody.innerHTML = '<tr><td colspan="7">Carregando...</td></tr>';
+
     try {
-        const response = await fetch(`${API_BASE_URL}/products?size=200`);
-        if (!response.ok) {
-            throw new Error('Failed to load products');
+        // ADICIONADO: O segundo parâmetro com headers
+        const response = await fetch(`${API_BASE_URL}/api/categories`, {
+            method: 'GET',
+            headers: getJsonHeaders() // Usa o helper padronizado
+        });
+
+        if (response.status === 401 || response.status === 403) {
+             throw new Error('Não autorizado! Verifica o login.');
         }
-        const page = await response.json();
-        products = (page.content || []).map(mapApiProductToUi);
-        displayProducts();
+
+        if (!response.ok) {
+            throw new Error('Falha ao carregar categorias');
+        }
+
+        const data = await response.json();
+        const categories = Array.isArray(data) ? data : (data.content || []);
+
+        const statusMap = getCategoryStatusFromStorage();
+
+        allCategories = categories.map(cat => ({
+            ...cat,
+            enabled: statusMap[cat.id] !== false ? (cat.enabled ?? true) : false
+        }));
+
+        currentCategoryPage = 1;
+        displayCategories();
+
     } catch (error) {
         console.error(error);
-        alert('Erro ao carregar produtos da API.');
+        tableBody.innerHTML = '<tr><td colspan="7" style="color:red">Erro ao carregar categorias (401/403).</td></tr>';
     }
 }
 
 async function fetchProductById(id) {
-    const response = await fetch(`${API_BASE_URL}/products/${id}`);
+    const response = await fetch(`${API_BASE_URL}/products/${id}`, {
+        headers: getJsonHeaders() // <--- Necessário se o GET for protegido
+    });
     if (!response.ok) {
         throw new Error('Product not found');
     }
@@ -473,88 +655,162 @@ function displayFilteredProducts(filteredProducts) {
     });
 }
 
-// Event listeners
 document.addEventListener('DOMContentLoaded', () => {
-    initializeProducts();
     const path = window.location.pathname;
+    const normalizedRole = normalizeRole(currentUser?.role);
 
-    if (path.includes('index.html')) {
-        document.getElementById('loginForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            login();
-        });
-    } else if (path.includes('register.html')) {
-        document.getElementById('registerForm').addEventListener('submit', (e) => {
-            e.preventDefault();
-            register();
-        });
-    } else if (path.includes('dashboard.html')) {
-        if (!currentUser) {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            document.getElementById('categoriesBtn').addEventListener('click', () => {
-                window.location.href = 'categories.html';
-            });
-            document.getElementById('addProductBtn').addEventListener('click', () => {
-                if (['admin', 'editor'].includes(currentUser.role)) {
-                    window.location.href = 'add-product.html';
-                } else {
-                    alert('You do not have permission to add products.');
-                }
-            });
-            document.getElementById('sortSelect').addEventListener('change', sortProducts);
-            document.getElementById('searchInput').addEventListener('input', searchProducts);
-            displayProducts();
-        }
-    } else if (path.includes('add-product.html')) {
-        if (!currentUser || !['admin', 'editor'].includes(currentUser.role)) {
+    // LOGIN
+    if (path.includes('index.html') || path === '/' || path.endsWith('/')) {
+        if (currentUser) {
             window.location.href = 'dashboard.html';
-        } else {
-            document.getElementById('addProductForm').addEventListener('submit', addProduct);
-            document.getElementById('addDetailBtn').addEventListener('click', addDetailField);
+            return;
         }
-    } else if (path.includes('edit-product.html')) {
-        if (!currentUser || !['admin', 'editor', 'salesperson'].includes(currentUser.role)) {
+
+        const loginForm = document.getElementById('loginForm');
+        if (loginForm) {
+            loginForm.addEventListener('submit', login);
+        }
+        return;
+    }
+
+    // REGISTRO
+    if (path.includes('register.html')) {
+        const registerForm = document.getElementById('registerForm');
+        if (registerForm) {
+            registerForm.addEventListener('submit', register);
+        }
+        return;
+    }
+
+    // A partir daqui, todas as rotas requerem utilizador autenticado
+    if (!currentUser) {
+        window.location.href = 'index.html';
+        return;
+    }
+
+    // DASHBOARD
+    if (path.includes('dashboard.html')) {
+        const userInfo = document.getElementById('userInfo');
+        if (userInfo) {
+            userInfo.textContent = `Bem-vindo, ${currentUser.name || ''} (${normalizedRole || 'USUÁRIO'})`;
+        }
+
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', logout);
+
+        const categoriesBtn = document.getElementById('categoriesBtn');
+        if (categoriesBtn) {
+            categoriesBtn.addEventListener('click', () => window.location.href = 'categories.html');
+        }
+
+        const addProductBtn = document.getElementById('addProductBtn');
+        if (addProductBtn) {
+            addProductBtn.addEventListener('click', () => window.location.href = 'add-product.html');
+        }
+
+        const addUserBtn = document.getElementById('addUserBtn');
+        if (addUserBtn) {
+            if (isAdminUser(currentUser)) {
+                addUserBtn.style.display = 'inline-block';
+                addUserBtn.addEventListener('click', () => window.location.href = 'register.html');
+            } else {
+                addUserBtn.style.display = 'none';
+            }
+        }
+
+        const searchInput = document.getElementById('searchInput');
+        if (searchInput) {
+            searchInput.addEventListener('input', searchProducts);
+        }
+
+        const sortSelect = document.getElementById('sortSelect');
+        if (sortSelect) {
+            sortSelect.addEventListener('change', () => {
+                sortProducts();
+                searchProducts();
+            });
+        }
+
+        initializeProducts();
+        displayProducts();
+        return;
+    }
+
+    // ADICIONAR PRODUTO
+    if (path.includes('add-product.html')) {
+        if (!['ADMIN', 'EDITOR'].includes(normalizedRole)) {
+            window.location.href = 'index.html';
+            return;
+        }
+        const addProductForm = document.getElementById('addProductForm');
+        if (addProductForm) addProductForm.addEventListener('submit', addProduct);
+
+        const addDetailBtn = document.getElementById('addDetailBtn');
+        if (addDetailBtn) addDetailBtn.addEventListener('click', addDetailField);
+        return;
+    }
+
+    // EDITAR PRODUTO
+    if (path.includes('edit-product.html')) {
+        if (!['ADMIN', 'EDITOR', 'SALESPERSON', 'GERENTE_VENDAS'].includes(normalizedRole)) {
             window.location.href = 'dashboard.html';
-        } else {
-            loadEditForm();
-            document.getElementById('editProductForm').addEventListener('submit', updateProduct);
-            document.getElementById('addDetailBtn').addEventListener('click', addDetailField);
+            return;
         }
-    } else if (path.includes('view-product.html')) {
-        if (!currentUser) {
-            window.location.href = 'index.html';
-        } else {
-            loadProductDetails();
+        loadEditForm();
+
+        const editProductForm = document.getElementById('editProductForm');
+        if (editProductForm) editProductForm.addEventListener('submit', updateProduct);
+
+        const addDetailBtn = document.getElementById('addDetailBtn');
+        if (addDetailBtn) addDetailBtn.addEventListener('click', addDetailField);
+        return;
+    }
+
+    // VER PRODUTO
+    if (path.includes('view-product.html')) {
+        loadProductDetails();
+        return;
+    }
+
+    // CATEGORIAS
+    if (path.includes('categories.html')) {
+        const userInfoElement = document.getElementById('userInfo');
+        if (userInfoElement) {
+            userInfoElement.textContent = `Welcome, ${currentUser.name} (${normalizedRole})`;
         }
-    } else if (path.includes('categories.html')) {
-        if (!currentUser) {
-            window.location.href = 'index.html';
-        } else {
-            document.getElementById('userInfo').textContent = `Welcome, ${currentUser.name} (${currentUser.role})`;
-            document.getElementById('logoutBtn').addEventListener('click', logout);
-            initializeCategoryStatusSystem();
-            document.getElementById('categoryForm').addEventListener('submit', createCategory);
 
-            const showOnlyEnabledCheckbox = document.getElementById('showOnlyEnabled');
-            const showSubcategoriesCheckbox = document.getElementById('showSubcategories');
+        const logoutBtn = document.getElementById('logoutBtn');
+        if (logoutBtn) logoutBtn.addEventListener('click', logout);
 
-            if (showOnlyEnabledCheckbox) {
-                showOnlyEnabledCheckbox.addEventListener('change', displayCategories);
-            }
-            if (showSubcategoriesCheckbox) {
-                showSubcategoriesCheckbox.addEventListener('change', displayCategories);
-            }
+        initializeCategoryStatusSystem();
 
-            if (!userIsAdmin()) {
-                const formSection = document.querySelector('.form-container');
-                if (formSection) formSection.style.display = 'none';
-            }
+        const categoryForm = document.getElementById('categoryForm');
+        if (categoryForm) categoryForm.addEventListener('submit', createCategory);
 
-            loadCategories();
+        const showOnlyEnabledCheckbox = document.getElementById('showOnlyEnabled');
+        const showSubcategoriesCheckbox = document.getElementById('showSubcategories');
+        const searchBox = document.getElementById('searchInput');
+        const sortSelect = document.getElementById('sortBy');
+
+        if (showOnlyEnabledCheckbox) showOnlyEnabledCheckbox.addEventListener('change', filterAndRender);
+        if (showSubcategoriesCheckbox) showSubcategoriesCheckbox.addEventListener('change', filterAndRender);
+        if (searchBox) searchBox.addEventListener('input', filterAndRender);
+        if (sortSelect) sortSelect.addEventListener('change', filterAndRender);
+
+        if (normalizedRole !== 'ADMIN') {
+            const formSection = document.querySelector('.form-container');
+            if (formSection) formSection.style.display = 'none';
         }
+
+        loadCategories();
+        return;
+    }
+
+    // Inicialização padrão caso nenhuma rota anterior dê return
+    try {
+        initializeProducts();
+    } catch (error) {
+        console.error("Aviso: Falha ao inicializar produtos. Verifique a API.", error);
     }
 });
 
@@ -577,14 +833,28 @@ function getUnsplashImage(width, height, category) {
 }
 
 // --- CATEGORY MANAGEMENT ---
-
 function normalizeImageUrl(url) {
-    if (!url) return null;
+    // ! Se a URL for nula, vazia ou inválida, retorna a imagem cinza.
+    if (!url || url.trim() === '' || url.trim() === 'null') {
+        // Data URL para um quadrado cinza (sem precisar de arquivo extra)
+        return 'data:image/svg+xml;utf8,<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 100 100"><rect width="100" height="100" fill="%23cccccc"/></svg>';
+    }
+
+    // Se for imagem da internet, retorna igual
     if (url.startsWith('http://') || url.startsWith('https://')) return url;
-    const trimmed = url.startsWith('/') ? url : `/${url}`;
+
+    let finalUrl = url;
+
+    // Garante que a URL tem a extensão correta (mantendo o ajuste anterior)
+    if (!finalUrl.match(/\.(jpeg|jpg|gif|png)$/i)) { // Adicionado /i para case-insensitive
+        finalUrl += '.png';
+    }
+
+    // Adiciona a base da API para formar a URL completa (ex: /user-images/...)
+    const trimmed = finalUrl.startsWith('/') ? finalUrl : `/${finalUrl}`;
+
     return `${API_BASE_URL}${trimmed}`;
 }
-
 function resolveCategoryImage(cat) {
     const raw = cat.imageUrl || cat.image || cat.imagePath || cat.photo;
     return normalizeImageUrl(raw) || getUnsplashImage(80, 80, cat.name || 'music');
@@ -618,8 +888,45 @@ function getCategoryStatusFromStorage() {
     return JSON.parse(localStorage.getItem('categoryStatus')) || {};
 }
 
+function getCategoryDataFromTable() {
+    const table = document.querySelector('table');
+
+    if (!table) {
+        console.error("Tabela de categorias não encontrada.");
+        return {};
+    }
+
+    const rows = table.querySelectorAll('tbody tr');
+    let categoryStatuses = {};
+
+    // Mapeamento: 0=ID, 2=Name, 3=Description, 4=Parent ID, 5=Status
+    rows.forEach(row => {
+        const cells = row.querySelectorAll('td');
+
+        if (cells.length >= 6) {
+            const id = cells[0].textContent.trim();
+            const name = cells[2].textContent.trim();
+            const description = cells[3].textContent.trim();
+            const parentId = cells[4].textContent.trim();
+            const statusText = cells[5].textContent.trim();
+
+            if (id) {
+                categoryStatuses[id] = {
+                    name: name,
+                    description: description,
+                    parentId: parentId,
+                    // Converte o texto de status para booleano (depende do texto na sua tabela)
+                    enabled: statusText.toLowerCase() === 'enabled' || statusText.toLowerCase() === 'sim',
+                };
+            }
+        }
+    });
+
+    return categoryStatuses;
+}
+
 function userIsAdmin() {
-    return currentUser && currentUser.role && currentUser.role.toUpperCase() === 'ADMIN';
+    return isAdminUser(currentUser);
 }
 
 function saveCategoryStatusToStorage(statusMap) {
@@ -787,7 +1094,7 @@ async function deleteCategory(id) {
 
 function userCanDelete() {
     if (!currentUser || !currentUser.role) return false;
-    const role = currentUser.role.toUpperCase();
+    const role = normalizeRole(currentUser.role);
     return role === 'ADMIN' || role === 'EDITOR';
 }
 
@@ -810,6 +1117,8 @@ function updateBreadcrumb() {
 function filterCategories(categories) {
     const showOnlyEnabled = document.getElementById('showOnlyEnabled')?.checked || false;
     const showSubcategories = document.getElementById('showSubcategories')?.checked || false;
+    const searchTerm = (document.getElementById('searchInput')?.value || '').toLowerCase();
+    const sortBy = document.getElementById('sortBy')?.value || 'name_asc';
 
     let filtered = [...categories];
 
@@ -820,6 +1129,33 @@ function filterCategories(categories) {
     if (!showSubcategories) {
         filtered = filtered.filter(cat => !cat.parentCategoryId);
     }
+
+    if (searchTerm) {
+        filtered = filtered.filter(cat => {
+            const name = (cat.name || '').toLowerCase();
+            const description = (cat.description || '').toLowerCase();
+            return name.includes(searchTerm) || description.includes(searchTerm);
+        });
+    }
+
+    filtered.sort((a, b) => {
+        const nameA = (a.name || '').toLowerCase();
+        const nameB = (b.name || '').toLowerCase();
+        const idA = a.id || 0;
+        const idB = b.id || 0;
+
+        switch (sortBy) {
+            case 'name_desc':
+                return nameB.localeCompare(nameA);
+            case 'id_asc':
+                return idA - idB;
+            case 'id_desc':
+                return idB - idA;
+            case 'name_asc':
+            default:
+                return nameA.localeCompare(nameB);
+        }
+    });
 
     return filtered;
 }
@@ -843,13 +1179,6 @@ function organizeCategoriesHierarchically(categories) {
             parent.subcategories.push(categoryObj);
         } else {
             rootCategories.push(categoryObj);
-        }
-    });
-
-    rootCategories.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
-    rootCategories.forEach(cat => {
-        if (cat.subcategories.length > 0) {
-            cat.subcategories.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
         }
     });
 
@@ -959,6 +1288,11 @@ function displayCategories() {
     updateStatusSummary();
 }
 
+function filterAndRender() {
+    currentCategoryPage = 1;
+    displayCategories();
+}
+
 function displayCategoryPagination(totalPages) {
     const paginationContainer = document.getElementById('categoriesPagination') || document.getElementById('pagination');
     if (!paginationContainer) return;
@@ -1041,19 +1375,69 @@ function updateStatusSummary() {
     `;
 }
 
+// A função para obter os dados continua a mesma, pois você está lendo o JSON do storage.
+function getCategoryStatusFromStorage() {
+    return JSON.parse(localStorage.getItem('categoryStatus')) || {};
+}
+
+// FUNÇÃO DE CONVERSÃO DE DADOS (NOVA)
+
+function convertJSONToCSV(data) {
+    if (!data || Object.keys(data).length === 0) {
+        return ""; // Retorna vazio se não houver dados
+    }
+
+
+    const allStatuses = Object.values(data);
+    if (allStatuses.length === 0) {
+        return "";
+    }
+
+    const headerKeys = ['ID', ...Object.keys(allStatuses[0])];
+
+    const csvHeader = headerKeys.join(';');
+    const csvRows = Object.entries(data).map(([id, statusObject]) => {
+        // Mapeia os valores na ordem dos cabeçalhos, começando pelo ID
+        const values = headerKeys.map(key => {
+            if (key === 'ID') {
+                return id; // Retorna a chave (ID)
+            }
+
+            let value = statusObject[key];
+
+            if (typeof value === 'string' && value.includes(';')) {
+                value = `"${value.replace(/"/g, '""')}"`; // Envolve em aspas se contiver o separador
+            }
+            return value;
+        });
+        return values.join(';');
+    });
+
+    return [csvHeader, ...csvRows].join('\n');
+}
+
 function exportCategoryStatus() {
-    const statusMap = JSON.parse(localStorage.getItem('categoryStatus')) || {};
-    const dataStr = JSON.stringify(statusMap, null, 2);
-    const dataUri = 'data:application/json;charset=utf-8,'+ encodeURIComponent(dataStr);
+    const categoryStatusJSON = getCategoryDataFromTable();
+    const csvString = convertJSONToCSV(categoryStatusJSON);
 
-    const exportFileDefaultName = 'category-status-backup.json';
+    if (csvString.length === 0) {
+        alert("Não há dados de status para exportar.");
+        return;
+    }
 
-    const linkElement = document.createElement('a');
-    linkElement.setAttribute('href', dataUri);
-    linkElement.setAttribute('download', exportFileDefaultName);
-    linkElement.click();
+    const blob = new Blob([csvString], { type: 'text/csv;charset=utf-8;' });
 
-    alert('Status das categorias exportado com sucesso!');
+    const link = document.createElement("a");
+
+    const url = URL.createObjectURL(blob);
+
+    link.setAttribute("href", url);
+    link.setAttribute("download", "category_status_export.csv"); // Nome do arquivo de saída
+
+    // 4. Dispara o clique e remove o link
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
 }
 
 function importCategoryStatus() {
@@ -1152,4 +1536,31 @@ if (editForm) {
 
 if (document.getElementById('editCategoryForm')) {
     document.addEventListener('DOMContentLoaded', loadCategoryForEdit);
+}
+
+async function loadProductsFromApi() {
+    try {
+        const response = await fetch(`${API_BASE_URL}/products?size=200`, {
+            method: 'GET',
+            // ALTERAÇÃO: Não usar getJsonHeaders() aqui para evitar enviar token inválido
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+        
+        if (response.status === 401) {
+            alert("Sessão expirada");
+            logout();
+            return;
+        }
+
+        if (!response.ok) throw new Error('Failed to load products');
+        
+        const page = await response.json();
+        products = (page.content || []).map(mapApiProductToUi);
+        displayProducts();
+    } catch (error) {
+        console.error(error);
+        alert('Erro ao carregar produtos da API.');
+    }
 }

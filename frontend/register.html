@@ -3,27 +3,30 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Register - BlueVelvet Music Store</title>
+    <title>Cadastro - BlueVelvet Music Store</title>
     <link rel="stylesheet" href="css/style.css?v=1">
 </head>
 <body>
 <div class="container">
     <h1>BlueVelvet Music Store</h1>
-    <h2>Register</h2>
+    <h2>Cadastro de Usuário</h2>
     <form id="registerForm">
-        <input type="text" id="name" placeholder="Name" required>
-        <input type="email" id="email" placeholder="Email" required>
-        <input type="password" id="password" placeholder="Password" required>
+        <input type="text" id="name" placeholder="Nome" required>
+        <input type="email" id="email" placeholder="E-mail" required>
+        <input type="password" id="password" placeholder="Senha (mínimo 8 caracteres)" minlength="8" required>
         <select id="role" required>
-            <option value="">Select Role</option>
-            <option value="admin">Admin</option>
-            <option value="editor">Editor</option>
-            <option value="salesperson">Salesperson</option>
-            <option value="shipper">Shipper</option>
+            <option value="">Selecione a função</option>
+            <option value="ADMIN">Administrador</option>
+            <option value="GERENTE_VENDAS">Gerente de Vendas</option>
+            <option value="EDITOR">Editor</option>
+            <option value="ASSISTENTE">Assistente</option>
+            <option value="GERENTE_ENVIO">Gerente de Envio</option>
         </select>
-        <button type="submit">Register</button>
+        <p class="helper-text">Somente administradores podem cadastrar novos usuários.</p>
+        <button type="submit">Cadastrar</button>
     </form>
-    <p>Already have an account? <a href="index.html">Login</a></p>
+    <p id="registerMessage" class="message" style="display:none;"></p>
+    <p>Já possui uma conta? <a href="index.html">Faça login</a></p>
 </div>
 <script src="script.js?v=1"></script>
 </body>
