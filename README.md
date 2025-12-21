@@ -12,14 +12,20 @@ An online platform for discovering and purchasing music albums. The BlueVelvet M
 - Vinícius Rossato
 
 ##  Technologies
-- instructions to be updated
-- 
+- Java 21 + Spring Boot (Web, Data JPA, Security, Thymeleaf)
+- Springdoc OpenAPI
+- MySQL
+- Lombok
+- Frontend em HTML/CSS/JS com Tailwind via CDN
 ##  How to Run
 1. Clone the repository  
    `git clone https://github.com/anafreiria/bluevelvet-music-store.git`
-3. Navigate to the project folder  
+2. Navigate to the project folder  
    `cd bluevelvet-music-store`
-4. Start the project (instructions to be updated)
+3. Start the backend (Spring Boot)  
+   `./gradlew bootRun`
+4. In another terminal, serve the frontend  
+   `cd frontend`  
+   `python3 -m http.server 5500`
+5. Access the app at `http://localhost:5500`
 
-## 📄 License
-MIT License
