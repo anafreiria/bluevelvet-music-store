@@ -1,44 +1,123 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Edit Product - BlueVelvet Music Store</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Editar Produto - BlueVelvet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#4f46e5", "background-dark": "#0d1117", "card-dark": "#161b22", "border-dark": "#30363d", "text-light": "#f0f6fc", "text-dim": "#8b949e" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } } }
+    </script>
 </head>
-<body>
-<div class="container">
-    <h1>BlueVelvet Music Store</h1>
-    <h2>Edit Product</h2>
-    <form id="editProductForm">
-        <input type="hidden" id="productId">
-        <input type="text" id="name" placeholder="Product Name" required>
-        <textarea id="shortDescription" placeholder="Short Description" required></textarea>
-        <textarea id="fullDescription" placeholder="Full Description" required></textarea>
-        <input type="text" id="brand" placeholder="Brand" required>
-        <input type="text" id="category" placeholder="Category" required>
-        <input type="file" id="mainImage" accept="image/png">
-        <div id="currentMainImage"></div>
-        <input type="file" id="featuredImages" accept="image/png" multiple>
-        <div id="currentFeaturedImages"></div>
-        <input type="number" id="listPrice" placeholder="List Price" step="0.01" required>
-        <input type="number" id="discountPercent" placeholder="Discount Percent" min="0" max="100" required>
-        <label>
-            <input type="checkbox" id="enabled"> Enabled
-        </label>
-        <label>
-            <input type="checkbox" id="inStock"> In Stock
-        </label>
-        <input type="number" id="length" placeholder="Length (inches)" step="0.01" required>
-        <input type="number" id="width" placeholder="Width (inches)" step="0.01" required>
-        <input type="number" id="height" placeholder="Height (inches)" step="0.01" required>
-        <input type="number" id="weight" placeholder="Weight (pounds)" step="0.01" required>
-        <input type="number" id="cost" placeholder="Cost" step="0.01" required>
-        <div id="productDetails"></div>
-        <button type="button" id="addDetailBtn">Add Detail</button>
-        <button type="submit">Update Product</button>
+<body class="bg-background-dark text-text-light font-display overflow-y-auto">
+<div class="max-w-[1000px] mx-auto p-6 md:p-10">
+    <div class="flex justify-between items-center mb-8 border-b border-border-dark pb-6">
+        <div>
+            <nav class="text-sm text-text-dim mb-2"><a href="dashboard.html" class="hover:text-white transition-colors">Dashboard</a> / Editar</nav>
+            <h1 class="text-3xl font-bold">Editar Produto</h1>
+        </div>
+        <a href="dashboard.html" class="px-4 py-2 rounded-lg border border-border-dark hover:bg-border-dark transition-colors text-sm font-medium">Voltar</a>
+    </div>
+
+    <form id="editProductForm" class="bg-card-dark rounded-xl border border-border-dark overflow-hidden shadow-xl">
+        <input type="hidden" id="editProdId">
+        <div class="grid grid-cols-1 lg:grid-cols-2 gap-0 lg:divide-x divide-border-dark">
+            <div class="p-8 flex flex-col gap-6">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-white"><span class="material-symbols-outlined text-primary">edit</span> Dados</h2>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-dim">Nome</label>
+                    <input id="editProdName" type="text" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none" required>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-text-dim">Marca</label>
+                        <input id="editProdBrand" type="text" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none">
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-text-dim">Categoria</label>
+                        <select id="editProdCategory" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none appearance-none cursor-pointer focus:border-primary">
+                            <option value="">Carregando...</option>
+                        </select>
+                    </div>
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-dim">Descrição Curta</label>
+                    <input id="editProdShortDesc" type="text" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none">
+                </div>
+
+                <div class="flex flex-col gap-2">
+                    <label class="text-sm font-medium text-text-dim">Descrição Completa</label>
+                    <textarea id="editProdFullDesc" rows="3" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none resize-none"></textarea>
+                </div>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-text-dim">Preço (R$)</label>
+                        <input id="editProdListPrice" type="number" step="0.01" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none" required>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-sm font-medium text-text-dim">Custo (R$)</label>
+                        <input id="editProdCost" type="number" step="0.01" class="w-full bg-[#0d1117] border border-border-dark rounded-lg px-4 py-3 text-white outline-none">
+                    </div>
+                </div>
+            </div>
+
+            <div class="p-8 bg-[#1c2128] flex flex-col gap-6">
+                <h2 class="text-lg font-bold flex items-center gap-2 text-white"><span class="material-symbols-outlined text-primary">image</span> Mídia & Estoque</h2>
+
+                <div class="grid grid-cols-2 gap-4">
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-[#0d1117] border border-border-dark">
+                        <span class="text-sm text-white">Ativo</span>
+                        <input id="editProdEnabled" type="checkbox" class="w-5 h-5 rounded border-border-dark bg-card-dark text-primary focus:ring-primary">
+                    </div>
+                    <div class="flex items-center justify-between p-3 rounded-lg bg-[#0d1117] border border-border-dark">
+                        <span class="text-sm text-white">Estoque</span>
+                        <input id="editProdInStock" type="checkbox" class="w-5 h-5 rounded border-border-dark bg-card-dark text-primary focus:ring-primary">
+                    </div>
+                </div>
+
+                <div class="grid grid-cols-4 gap-2">
+                    <div class="flex flex-col gap-1"><label class="text-xs text-text-dim">Largura</label><input id="editDimWidth" type="number" step="0.01" class="bg-[#0d1117] border border-border-dark rounded px-2 py-2 text-white text-sm"></div>
+                    <div class="flex flex-col gap-1"><label class="text-xs text-text-dim">Altura</label><input id="editDimHeight" type="number" step="0.01" class="bg-[#0d1117] border border-border-dark rounded px-2 py-2 text-white text-sm"></div>
+                    <div class="flex flex-col gap-1"><label class="text-xs text-text-dim">Comp.</label><input id="editDimLength" type="number" step="0.01" class="bg-[#0d1117] border border-border-dark rounded px-2 py-2 text-white text-sm"></div>
+                    <div class="flex flex-col gap-1"><label class="text-xs text-text-dim">Peso</label><input id="editDimWeight" type="number" step="0.01" class="bg-[#0d1117] border border-border-dark rounded px-2 py-2 text-white text-sm"></div>
+                </div>
+
+                <div class="border-t border-border-dark pt-4">
+                    <div class="flex justify-between items-center mb-2">
+                        <label class="text-sm font-medium text-text-dim">Especificações Técnicas</label>
+                        <button type="button" id="addDetailBtn" class="text-primary text-xs font-bold hover:underline">+ Adicionar</button>
+                    </div>
+                    <div id="detailsContainer" class="flex flex-col gap-2"></div>
+                </div>
+
+                <div class="flex flex-col gap-4 border-t border-border-dark pt-4">
+                    <label class="text-sm font-medium text-text-dim">Imagem Principal</label>
+                    <div id="imagePreviewContainer" class="w-full aspect-video bg-[#0d1117] border-2 border-dashed border-border-dark rounded-lg flex items-center justify-center overflow-hidden">
+                        <img id="currentProdImage" src="" alt="" class="w-full h-full object-cover hidden">
+                        <span id="noProdImageText" class="text-text-dim text-xs">Sem Imagem</span>
+                    </div>
+                    <input type="file" id="editProdImage" class="block w-full text-sm text-text-dim file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+
+                    <label class="text-sm font-medium text-text-dim mt-4">Adicionar Imagens à Galeria</label>
+                    <input type="file" id="editAdditionalImages" multiple class="block w-full text-sm text-text-dim file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-primary/10 file:text-primary hover:file:bg-primary/20">
+                </div>
+
+            </div>
+        </div>
+
+        <div class="p-6 border-t border-border-dark bg-[#1c2128] flex justify-end gap-3">
+            <button type="button" onclick="window.location.href='dashboard.html'" class="px-6 py-2.5 rounded-lg border border-border-dark text-text-dim hover:text-white hover:bg-border-dark transition-colors">Cancelar</button>
+            <button type="submit" class="bg-primary hover:bg-blue-600 text-white px-8 py-2.5 rounded-lg shadow-lg shadow-primary/20 font-medium flex items-center gap-2">
+                <span class="material-symbols-outlined text-xl">save</span> Atualizar Produto
+            </button>
+        </div>
     </form>
-    <a href="dashboard.html">Back to Dashboard</a>
 </div>
 <script src="script.js"></script>
 </body>

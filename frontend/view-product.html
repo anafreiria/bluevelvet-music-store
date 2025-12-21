@@ -1,17 +1,64 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>View Product - BlueVelvet Music Store</title>
-    <link rel="stylesheet" href="css/style.css">
+    <meta charset="utf-8"/>
+    <title>Detalhes do Produto - BlueVelvet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = { darkMode: "class", theme: { extend: { colors: { "primary": "#4f46e5", "background-dark": "#0d1117", "card-dark": "#161b22", "border-dark": "#30363d", "text-light": "#f0f6fc", "text-dim": "#8b949e" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } } }
+    </script>
 </head>
-<body>
-<div class="container">
-    <h1>BlueVelvet Music Store</h1>
-    <h2>Product Details</h2>
-    <div id="productDetails"></div>
-    <a href="dashboard.html">Back to Dashboard</a>
+<body class="bg-background-dark text-text-light font-display">
+<div class="max-w-6xl mx-auto p-6 md:p-10">
+    <div class="mb-6">
+        <a href="dashboard.html" class="inline-flex items-center gap-2 text-text-dim hover:text-white transition-colors text-sm"><span class="material-symbols-outlined text-sm">arrow_back</span> Voltar para Produtos</a>
+    </div>
+
+    <div class="bg-card-dark rounded-2xl border border-border-dark overflow-hidden shadow-2xl">
+        <div class="grid grid-cols-1 md:grid-cols-2">
+
+            <div class="bg-[#050505] p-6 flex flex-col gap-4">
+                <div class="relative w-full aspect-[4/5] bg-black rounded-lg overflow-hidden border border-border-dark">
+                    <img id="viewProdImage" src="" class="w-full h-full object-cover transition-opacity duration-300" onerror="handleImageError(this)">
+                </div>
+
+                <div id="galleryContainer" class="flex gap-2 overflow-x-auto pb-2 scrollbar-thin scrollbar-thumb-border-dark scrollbar-track-transparent h-24 hidden">
+                </div>
+            </div>
+
+            <div class="p-8 flex flex-col gap-6">
+                <div>
+                    <span id="viewProdCategory" class="bg-primary/20 text-primary px-3 py-1 rounded-full text-xs font-bold uppercase tracking-wider">Geral</span>
+                    <h1 id="viewProdName" class="text-3xl font-extrabold text-white mt-3 leading-tight">Nome do Produto</h1>
+                </div>
+
+                <div class="flex items-end gap-2">
+                    <span id="viewProdPrice" class="text-4xl font-bold text-primary">R$ 0,00</span>
+                </div>
+
+                <div class="space-y-4">
+                    <div>
+                        <h3 class="text-sm font-bold text-white mb-1">Descrição Curta</h3>
+                        <p id="viewProdShortDesc" class="text-text-dim text-sm leading-relaxed"></p>
+                    </div>
+                    <div>
+                        <h3 class="text-sm font-bold text-white mb-1">Descrição Completa</h3>
+                        <p id="viewProdFullDesc" class="text-text-dim text-sm leading-relaxed"></p>
+                    </div>
+                </div>
+
+                <div class="mt-4 pt-6 border-t border-border-dark">
+                    <h3 class="text-sm font-bold text-white mb-3 flex items-center gap-2"><span class="material-symbols-outlined text-primary text-base">settings</span> Especificações</h3>
+                    <ul id="viewProdDetails" class="flex flex-col"></ul>
+                    <div class="mt-4 text-xs text-text-dim">
+                        Dimensões: <span id="viewDim">-</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
 </div>
 <script src="script.js"></script>
 </body>

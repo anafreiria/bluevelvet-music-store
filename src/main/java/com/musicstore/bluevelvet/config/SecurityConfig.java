@@ -23,72 +23,47 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain filterChain(HttpSecurity http) throws Exception {
         http
-                .csrf(csrf -> csrf.disable()) // Desabilita CSRF (comum para APIs REST)
-                .cors(Customizer.withDefaults()) // Ativa a configuração de CORS definida no final do arquivo
-                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED)) // API sem estado (Stateless)
+                .csrf(csrf -> csrf.disable())
+                .cors(Customizer.withDefaults())
+                .sessionManagement(session -> session.sessionCreationPolicy(SessionCreationPolicy.IF_REQUIRED))
                 .authorizeHttpRequests(auth -> auth
-                        // 1. IMPORTANTE: Libera o "pre-flight" do CORS para todas as rotas
                         .requestMatchers(HttpMethod.OPTIONS, "/**").permitAll()
+                        .requestMatchers("/user-images/**", "/css/**", "/js/**", "/images/**").permitAll()
+                        .requestMatchers("/v3/api-docs/**", "/swagger-ui/**", "/swagger-ui.html").permitAll()
 
-                        // 2. Documentação API (Swagger UI / OpenApi) - NOVO
-                        .requestMatchers(
-                                "/v3/api-docs/**",
-                                "/swagger-ui/**",
-                                "/swagger-ui.html"
-                        ).permitAll()
+                        // Rotas Públicas
+                        .requestMatchers("/auth/login").permitAll()
+                        .requestMatchers("/auth/register").permitAll() // <--- AGORA É PÚBLICO
+                        .requestMatchers("/h2-console/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/products/**", "/products/**").permitAll()
+                        .requestMatchers(HttpMethod.GET, "/api/categories/**", "/categories/**").permitAll()
 
-                        // 3. Rotas Públicas (Qualquer pessoa pode acessar)
-                        .requestMatchers("/auth/login").permitAll()           // Login público
-                        .requestMatchers("/h2-console/**").permitAll()     // Banco de dados H2
-                        .requestMatchers(HttpMethod.GET, "/api/products/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/api/categories/**").permitAll()
-                        .requestMatchers(HttpMethod.GET, "/products/**").permitAll()  // Ver lista de produtos
-                        .requestMatchers(HttpMethod.GET, "/categories/**").permitAll() // Ver categorias
-
-                        // 4. Rotas Administrativas (Apenas ADMIN)
-                        .requestMatchers(HttpMethod.POST, "/auth/register").hasRole("ADMIN")
+                        // Rotas Administrativas (Listagem de users)
                         .requestMatchers(HttpMethod.POST, "/users/**").hasRole("ADMIN")
 
-                        // 5. Rotas de Edição (ADMIN e EDITOR)
-                        .requestMatchers("/categories/export/**").hasAnyRole("ADMIN", "EDITOR")
-                        .requestMatchers(HttpMethod.POST, "/categories/**").hasAnyRole("ADMIN", "EDITOR")
-                        .requestMatchers(HttpMethod.PUT, "/categories/**").hasAnyRole("ADMIN", "EDITOR")
-                        .requestMatchers(HttpMethod.DELETE, "/categories/**").hasAnyRole("ADMIN", "EDITOR")
+                        // Edição
+                        .requestMatchers(HttpMethod.POST, "/**").hasAnyRole("ADMIN", "EDITOR")
+                        .requestMatchers(HttpMethod.PUT, "/**").hasAnyRole("ADMIN", "EDITOR")
+                        .requestMatchers(HttpMethod.DELETE, "/**").hasAnyRole("ADMIN", "EDITOR")
 
-                        // 6. Qualquer outra rota exige login (REGRA FINAL)
                         .anyRequest().authenticated()
                 )
-                // Configurações extras fora do authorizeHttpRequests
-                .headers(headers -> headers.frameOptions(frame -> frame.disable())) // Permite exibir o H2 Console
-                .httpBasic(Customizer.withDefaults()); // Autenticação Básica
+                .headers(headers -> headers.frameOptions(frame -> frame.disable()))
+                .httpBasic(Customizer.withDefaults());
 
         return http.build();
     }
 
     @Bean
-    public PasswordEncoder passwordEncoder() {
-        return new BCryptPasswordEncoder();
-    }
+    public PasswordEncoder passwordEncoder() { return new BCryptPasswordEncoder(); }
 
     @Bean
     CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
-
-        // Define as origens permitidas (Frontend)
-        configuration.setAllowedOrigins(List.of(
-                "http://127.0.0.1:5500",
-                "http://localhost:5500"
-        ));
-
-        // Métodos permitidos
+        configuration.setAllowedOrigins(List.of("http://127.0.0.1:5500", "http://localhost:5500"));
         configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS"));
-
-        // Cabeçalhos permitidos
         configuration.setAllowedHeaders(List.of("*"));
-
-        // Permite o envio de credenciais (Cookies/Auth Headers)
         configuration.setAllowCredentials(true);
-
         UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
         source.registerCorsConfiguration("/**", configuration);
         return source;

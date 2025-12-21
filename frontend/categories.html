@@ -1,122 +1,110 @@
 <!DOCTYPE html>
-<html lang="en">
+<html class="dark" lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Categories - BlueVelvet Music Store</title>
-    <link rel="stylesheet" href="css/style.css">
-    <style>
-        .filters {
-            display: flex;
-            flex-wrap: wrap;
-            gap: 15px;
-            align-items: center;
-            margin-bottom: 20px;
-            padding: 15px;
-            background-color: #f5f5f5;
-            border-radius: 8px;
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
+    <title>Categorias - BlueVelvet</title>
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { "primary": "#4f46e5", "background-dark": "#0d1117", "card-dark": "#161b22", "border-dark": "#30363d", "text-light": "#f0f6fc", "text-dim": "#8b949e" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } }
         }
-        .search-box input, .sort-box select {
-            padding: 8px;
-            border: 1px solid #ccc;
-            border-radius: 4px;
-        }
-    </style>
+    </script>
 </head>
-<body>
-
-<header>
-    <nav>
-        <div class="logo">BlueVelvet Admin</div>
-        <ul>
-            <li><a href="dashboard.html">Dashboard</a></li>
-            <li><a href="#" id="logoutBtn">Logout</a></li>
-        </ul>
-    </nav>
-    <div class="user-info" id="userInfo"></div>
-</header>
-
-<main>
-    <h2>Category Management</h2>
-
-    <section class="form-container">
-        <h3>Create New Category</h3>
-        <form id="categoryForm" enctype="multipart/form-data">
-            <input type="text" id="categoryName" placeholder="Category Name" required>
-            <input type="text" id="categoryDescription" placeholder="Description">
-            <input type="number" id="parentCategoryId" placeholder="Parent Category ID (Optional)">
-            
-            <label class="checkbox-inline">
-                <input type="checkbox" id="categoryEnabled" checked>
-                Category Enabled
-            </label>
-            
-            <label for="categoryImage">Category Image (optional)</label>
-            <input type="file" id="categoryImage" accept="image/*">
-            
-            <button type="submit">Add Category</button>
-        </form>
-        <div id="categoryStatus"></div>
-    </section>
-
-    <section class="list-container">
-        <h3>All Categories</h3>
-        
-        <div id="breadcrumb" class="breadcrumb">
-            <span id="breadcrumbPath"><a href="#">Início</a></span>
+<body class="bg-background-dark text-text-light font-display overflow-y-scroll">
+<div class="flex min-h-screen w-full flex-col">
+    <header class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-3xl">album</span>
+            <h2 class="text-xl font-bold">BlueVelvet Admin</h2>
         </div>
 
-        <div class="filters">
-            <div class="search-box">
-                <input type="text" id="searchInput" placeholder="Pesquisar nome ou descrição..." onkeyup="filterAndRender()">
+        <div class="flex items-center gap-4">
+            <button id="registerUserBtn" class="hidden bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">person_add</span> Novo Usuário
+            </button>
+
+            <span id="userInfo" class="text-sm font-bold text-white"></span>
+            <button id="logoutBtn" class="text-text-dim hover:text-white transition-colors" title="Sair">
+                <span class="material-symbols-outlined">logout</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 py-5 px-4 lg:px-8 justify-center">
+        <div class="w-full max-w-[1280px] flex flex-col gap-6">
+
+            <div class="flex justify-between items-center bg-card-dark p-4 rounded-xl border border-border-dark">
+                <div>
+                    <h1 class="text-2xl font-extrabold text-white">Gerenciar Categorias</h1>
+                </div>
+                <div class="flex gap-3">
+                    <button onclick="window.location.href='dashboard.html'" class="flex items-center gap-2 bg-border-dark hover:bg-white/10 px-4 py-2 rounded-lg transition-colors font-bold text-sm">
+                        <span class="material-symbols-outlined">arrow_back</span> Voltar
+                    </button>
+                    <button onclick="document.getElementById('createCategorySection').classList.remove('hidden')" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors font-bold text-sm shadow-lg shadow-primary/20">
+                        <span class="material-symbols-outlined">add_circle</span> Nova Categoria
+                    </button>
+                </div>
             </div>
 
-            <div class="sort-box">
-                <select id="sortBy" onchange="filterAndRender()">
-                    <option value="name_asc">Nome (A-Z)</option>
-                    <option value="name_desc">Nome (Z-A)</option>
-                    <option value="id_asc">ID (Crescente)</option>
-                    <option value="id_desc">ID (Decrescente)</option>
+            <div class="flex flex-col sm:flex-row gap-4">
+                <div class="relative flex-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim material-symbols-outlined">search</span>
+                    <input id="catSearchInput" class="w-full bg-card-dark border border-border-dark rounded-lg pl-10 py-2.5 text-text-light focus:ring-primary focus:border-primary outline-none" placeholder="Buscar categorias..."/>
+                </div>
+                <select id="catSortSelect" class="bg-card-dark border border-border-dark rounded-lg px-4 py-2.5 text-text-light focus:ring-primary outline-none">
+                    <option value="name">Nome (A-Z)</option>
+                    <option value="id">ID (Crescente)</option>
                 </select>
             </div>
 
-            <label>
-                <input type="checkbox" id="showOnlyEnabled" onchange="filterAndRender()" checked>
-                Show only enabled
-            </label>
-            <label>
-                <input type="checkbox" id="showSubcategories" checked>
-                Show subcategories
-            </label>
-
-            <div class="filter-actions">
-                <button type="button" onclick="exportCategoryStatus()">Export Status</button>
-                <button type="button" onclick="importCategoryStatus()">Import Status</button>
+            <div id="createCategorySection" class="hidden bg-card-dark border border-border-dark rounded-xl p-6 shadow-2xl relative animate-fade-in mb-4">
+                <button onclick="document.getElementById('createCategorySection').classList.add('hidden')" class="absolute top-4 right-4 text-text-dim hover:text-white"><span class="material-symbols-outlined">close</span></button>
+                <h3 class="text-lg font-bold text-white mb-4 flex items-center gap-2"><span class="material-symbols-outlined text-primary">edit_square</span> Dados da Categoria</h3>
+                <form id="categoryForm" class="flex flex-col gap-4">
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-text-dim uppercase">Nome</label>
+                            <input id="categoryName" type="text" class="bg-[#0d1117] border border-border-dark rounded-lg px-4 py-2 text-white focus:border-primary outline-none" required>
+                        </div>
+                        <div class="flex flex-col gap-2">
+                            <label class="text-xs font-bold text-text-dim uppercase">Categoria Pai (ID)</label>
+                            <input id="parentCategoryId" type="number" class="bg-[#0d1117] border border-border-dark rounded-lg px-4 py-2 text-white focus:border-primary outline-none" placeholder="Opcional">
+                        </div>
+                    </div>
+                    <div class="flex flex-col gap-2">
+                        <label class="text-xs font-bold text-text-dim uppercase">Descrição</label>
+                        <textarea id="categoryDescription" rows="2" class="bg-[#0d1117] border border-border-dark rounded-lg px-4 py-2 text-white focus:border-primary outline-none resize-none"></textarea>
+                    </div>
+                    <div class="flex justify-end mt-2">
+                        <button type="submit" class="bg-primary text-white px-6 py-2 rounded-lg font-bold hover:bg-primary/90 flex items-center gap-2">
+                            <span class="material-symbols-outlined">save</span> Salvar
+                        </button>
+                    </div>
+                </form>
             </div>
+
+            <div class="bg-card-dark border border-border-dark rounded-xl overflow-hidden">
+                <div class="grid grid-cols-12 gap-4 px-6 py-3 bg-[#1c2128] border-b border-border-dark text-text-dim text-xs font-bold uppercase tracking-wider">
+                    <div class="col-span-1 text-center">ID</div>
+                    <div class="col-span-4">Categoria</div>
+                    <div class="col-span-4">Descrição</div>
+                    <div class="col-span-2 text-center">Pai</div>
+                    <div class="col-span-1 text-right">Ação</div>
+                </div>
+
+                <div id="categoryList" class="divide-y divide-border-dark">
+                    <div class="p-8 text-center text-text-dim">Carregando...</div>
+                </div>
+            </div>
+
         </div>
-
-        <div id="statusSummary" class="status-info"></div>
-
-        <table id="categoriesTable">
-            <thead>
-            <tr>
-                <th>ID</th>
-                <th>Image</th>
-                <th>Name</th>
-                <th>Description</th>
-                <th>Parent ID</th>
-                <th>Status</th>
-                <th>Actions</th> 
-            </tr>
-            </thead>
-            <tbody id="categoryList">
-                </tbody>
-        </table>
-        
-        <div id="categoriesPagination"></div>
-    </section>
-</main>
-
+    </div>
+</div>
 <script src="script.js"></script>
 </body>
 </html>

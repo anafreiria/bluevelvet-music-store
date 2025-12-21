@@ -11,41 +11,30 @@ import java.util.List;
 @Getter
 @Setter
 @Builder
-@ToString
 @NoArgsConstructor
 @AllArgsConstructor
 public class ProductResponse {
-
     private Long id;
-
     private String name;
-
     private String shortDescription;
-
     private String fullDescription;
-
     private String brand;
-
     private String category;
-
     private String mainImage;
 
-    private BigDecimal listPrice;
+    // Lista de nomes de arquivo das imagens extras
+    private List<String> additionalImages;
 
+    // --- CORREÇÃO: BigDecimal ---
+    private BigDecimal cost;
+    private BigDecimal listPrice;
     private BigDecimal discount;
 
+    private LocalDateTime creationTime;
+    private LocalDateTime updateTime;
     private Boolean isEnabled;
-
     private Boolean inStock;
 
-    private LocalDateTime creationTime;
-
-    private LocalDateTime updateTime;
-
     private ProductDimensionRequest dimension;
-
-    private BigDecimal cost;
-
     private List<ProductDetailRequest> details;
-
 }

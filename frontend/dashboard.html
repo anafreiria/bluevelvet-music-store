@@ -1,59 +1,71 @@
 <!DOCTYPE html>
-<html lang="pt-BR">
+<html class="dark" lang="pt-BR">
 <head>
-    <meta charset="UTF-8">
+    <meta charset="utf-8"/>
+    <meta content="width=device-width, initial-scale=1.0" name="viewport"/>
     <title>Dashboard - BlueVelvet</title>
-    <link rel="stylesheet" href="css/style.css">
+    <link href="https://fonts.googleapis.com/css2?family=Manrope:wght@400;500;700;800&display=swap" rel="stylesheet"/>
+    <link href="https://fonts.googleapis.com/css2?family=Material+Symbols+Outlined:wght,FILL@100..700,0..1&display=swap" rel="stylesheet"/>
+    <script src="https://cdn.tailwindcss.com?plugins=forms,container-queries"></script>
+    <script>
+        tailwind.config = {
+            darkMode: "class",
+            theme: { extend: { colors: { "primary": "#4f46e5", "background-dark": "#0d1117", "card-dark": "#161b22", "border-dark": "#30363d", "text-light": "#f0f6fc", "text-dim": "#8b949e" }, fontFamily: { "display": ["Manrope", "sans-serif"] } } }
+        }
+    </script>
 </head>
-<body>
-<header>
-    <h1>BlueVelvet Music Store</h1>
-    <nav>
-        <span id="userInfo">Bem-vindo!</span>
-        <button id="logoutBtn">Sair</button>
-        <button id="categoriesBtn" class="action-btn btn-view" style="margin-left:8px;">Categorias</button>
-    </nav>
-</header>
+<body class="bg-background-dark text-text-light font-display">
+<div class="flex min-h-screen w-full flex-col">
+    <header class="sticky top-0 z-50 bg-background-dark/80 backdrop-blur-md border-b border-border-dark px-6 py-3 flex justify-between items-center">
+        <div class="flex items-center gap-3">
+            <span class="material-symbols-outlined text-primary text-3xl">album</span>
+            <h2 class="text-xl font-bold">BlueVelvet Admin</h2>
+        </div>
 
-<div class="container">
-    <div style="display:flex; justify-content:space-between; align-items:center; margin-bottom:20px;">
-        <h2>Lista de Produtos</h2>
-        <button id="addProductBtn" class="action-btn btn-view" style="font-size: 1rem;">+ Novo Produto</button>
-        <button id="addUserBtn" class="action-btn btn-view" style="font-size: 1rem;">+ Novo Usuário</button>
+        <div class="flex items-center gap-4">
+            <button id="registerUserBtn" class="hidden bg-primary/20 hover:bg-primary/30 text-primary border border-primary/50 px-3 py-1.5 rounded-lg transition-colors text-xs font-bold flex items-center gap-2">
+                <span class="material-symbols-outlined text-base">person_add</span> Novo Usuário
+            </button>
+
+            <span id="userInfo" class="text-sm font-bold text-white"></span>
+            <button id="logoutBtn" class="text-text-dim hover:text-white transition-colors" title="Sair">
+                <span class="material-symbols-outlined">logout</span>
+            </button>
+        </div>
+    </header>
+
+    <div class="flex flex-1 py-5 px-4 lg:px-8 justify-center">
+        <div class="w-full max-w-[1280px] flex flex-col gap-6">
+            <div class="flex justify-between items-center bg-card-dark p-4 rounded-xl border border-border-dark">
+                <h1 class="text-2xl font-extrabold text-white">Catálogo de Produtos</h1>
+                <div class="flex gap-3">
+                    <button id="categoriesBtn" class="flex items-center gap-2 bg-border-dark hover:bg-white/10 px-4 py-2 rounded-lg transition-colors font-bold text-sm">
+                        <span class="material-symbols-outlined">category</span> Categorias
+                    </button>
+                    <button id="addProductBtn" class="flex items-center gap-2 bg-primary hover:bg-primary/90 text-white px-4 py-2 rounded-lg transition-colors font-bold text-sm">
+                        <span class="material-symbols-outlined">add</span> Novo Produto
+                    </button>
+                </div>
+            </div>
+
+            <div class="flex flex-col sm:flex-row gap-4 mb-2">
+                <div class="relative flex-1">
+                    <span class="absolute left-3 top-1/2 -translate-y-1/2 text-text-dim material-symbols-outlined">search</span>
+                    <input id="searchInput" class="w-full bg-card-dark border border-border-dark rounded-lg pl-10 py-2.5 text-text-light focus:ring-primary focus:border-primary outline-none" placeholder="Buscar produtos..."/>
+                </div>
+                <select id="sortSelect" class="bg-card-dark border border-border-dark rounded-lg px-4 py-2.5 text-text-light focus:ring-primary outline-none">
+                    <option value="name">Nome (A-Z)</option>
+                    <option value="listPrice">Preço (Menor)</option>
+                </select>
+            </div>
+
+            <div id="productList" class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+            </div>
+
+            <div id="pagination" class="flex justify-center gap-2 mt-8"></div>
+        </div>
     </div>
-
-    <div style="display:flex; gap: 16px; align-items:center; margin-bottom:16px;">
-        <label>
-            Ordenar por:
-            <select id="sortSelect">
-                <option value="name">Nome</option>
-                <option value="brand">Marca</option>
-                <option value="category">Categoria</option>
-            </select>
-        </label>
-        <label style="flex:1;">
-            Buscar:
-            <input type="text" id="searchInput" placeholder="Nome, descrição, marca ou categoria" style="width:100%;">
-        </label>
-    </div>
-
-    <table>
-        <thead>
-        <tr>
-            <th>ID</th>
-            <th>Imagem</th>
-            <th>Nome</th>
-            <th>Marca</th>
-            <th>Categoria</th>
-            <th>Ações</th>
-        </tr>
-        </thead>
-        <tbody id="productList">
-        </tbody>
-    </table>
-    <div id="pagination" style="margin-top:16px;"></div>
 </div>
-
 <script src="script.js"></script>
 </body>
 </html>

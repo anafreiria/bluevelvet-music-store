@@ -6,6 +6,7 @@ import lombok.*;
 import java.io.Serializable;
 import java.math.BigDecimal;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
 import java.util.List;
 
 @Entity
@@ -14,7 +15,7 @@ import java.util.List;
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
-@Table(schema = "db", name = "product")
+@Table(name = "product") // Removi schema="db" para evitar erros em alguns MySQLs
 public class Product implements Serializable {
 
     @Id
@@ -23,24 +24,28 @@ public class Product implements Serializable {
 
     private String name;
 
-    @Column(name = "short_description")
+    @Column(name = "short_description", length = 500)
     private String shortDescription;
 
-    @Column(name = "full_description")
+    @Column(name = "full_description", columnDefinition = "TEXT")
     private String fullDescription;
 
     private String brand;
-
     private String category;
 
     @Column(name = "main_image")
     private String mainImage;
 
+    // --- NOVO: Lista de Imagens Extras ---
+    @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
+    @Builder.Default
+    private List<ProductImage> additionalImages = new ArrayList<>();
+
+    // --- CORREÇÃO: BigDecimal para preços ---
     @Column(name = "list_price")
     private BigDecimal listPrice;
 
     private BigDecimal discount;
-
     private BigDecimal cost;
 
     private Boolean enabled;
@@ -59,6 +64,4 @@ public class Product implements Serializable {
 
     @OneToMany(mappedBy = "product", cascade = CascadeType.ALL, orphanRemoval = true)
     private List<ProductDetail> productDetails;
-
-
 }

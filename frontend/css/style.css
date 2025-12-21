@@ -127,27 +127,3 @@ th {
     align-items: center;
     gap: 6px;
 }
-
-.message {
-    margin: 8px 0;
-    padding: 10px;
-    border-radius: 4px;
-    border: 1px solid transparent;
-}
-
-.message.error {
-    background-color: #ffe5e5;
-    border-color: #ffb3b3;
-    color: #a60000;
-}
-
-.message.success {
-    background-color: #e6ffed;
-    border-color: #b5e2c5;
-    color: #11643c;
-}
-
-.helper-text {
-    margin: 6px 0;
-    color: #555;
-}
